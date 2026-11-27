@@ -1,0 +1,16 @@
+[ 모음집 · 비주얼 노벨 미디어 넣는 곳 ]
+
+illust/  — 컷씬 일러스트.  파일 이름 = 대본의 [컷씬: 이름]
+           예) canto0_illust_01.png  (webp · png · jpg 모두 됨)
+
+bgm/     — BGM.  파일 이름은 media.js 의 file 이름
+           Canto 0:
+             c0_01.mp3  Karma
+             c0_02.mp3  Return of Light (Faun Ver.)
+             c0_03.mp3  Smooth Lovin
+             c0_04.mp3  vs. SAYU (Rock Version)
+             c0_05.mp3  leberch-industrial-580501
+             c0_06.mp3  憂鬱の憂鬱
+           (mp3 또는 ogg)
+
+파일을 넣고 사이트를 다시 올리면 비주얼 노벨 · 모음집 · 로비 BGM에 바로 나옵니다.

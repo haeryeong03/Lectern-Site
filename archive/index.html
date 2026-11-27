@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lectern Company — 자료실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<script>
+  (function(){ var q=new URLSearchParams(location.search), t=q.get('theme');
+    if(!t){ try{ t=(JSON.parse(localStorage.getItem('lc-lobby-prefs')||'{}').theme); }catch(e){} }
+    document.documentElement.dataset.theme = (t==='light')?'light':'dark'; })();
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="../lc-bridge.js"></script>
+<script src="../lc-assets.js"></script>
+<style>
+:root{
+  --serif-en:'Cormorant Garamond','Noto Serif KR',serif; --serif-kr:'Noto Serif KR','Cormorant Garamond',serif;
+  --sans:'Pretendard','Noto Sans KR',system-ui,sans-serif; --mono:'IBM Plex Mono','Noto Sans KR',monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+html[data-theme="dark"]{--bg:#121412;--bg2:#0d0f0d;--panel:#1C1F1C;--panel2:#232723;--ink:#E9E4D8;--ink2:#B9B4A8;--ink3:#7d7f77;--line:#5A5C55;--line2:#33362f;
+  --brass:#B08D57;--brass2:#d4b47c;--green:#4f9e72;--red:#E04450;--chk1:#1a1d1a;--chk2:#222622;--grain:.06}
+html[data-theme="light"]{--bg:#EDE8DD;--bg2:#e3ddcf;--panel:#F6F2EA;--panel2:#fbf8f2;--ink:#1C1C1A;--ink2:#4a4842;--ink3:#8C877C;--line:#8C877C;--line2:#cfc8b8;
+  --brass:#9A7A45;--brass2:#7c6033;--green:#2E7D52;--red:#C8323C;--chk1:#ece6d8;--chk2:#e2dbcb;--grain:.08}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+.mono{font-family:var(--mono);letter-spacing:.04em}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:var(--grain);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+#app{height:100%;display:grid;grid-template-rows:auto 1fr;max-width:1440px;margin:0 auto;padding:18px 26px 0}
+.hd{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.hd .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--ink3)}
+.hd h1{font-family:var(--serif-en);font-weight:600;font-size:30px;letter-spacing:.12em;line-height:1.05}
+.hd h1 small{font-family:var(--serif-kr);font-size:15px;letter-spacing:.04em;font-weight:500;color:var(--ink2);margin-left:10px}
+.hd .sp{flex:1}
+.stat{display:flex;gap:22px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink3)}
+.stat b{display:block;font-family:var(--serif-en);font-size:22px;color:var(--ink);letter-spacing:.02em;font-weight:600;line-height:1.05}
+.stat b small{font-size:12px;color:var(--ink3)}
+.meter{width:150px;height:3px;background:var(--line2);margin-top:6px;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--brass)}
+
+.btn{border:1px solid var(--line);padding:6px 11px;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:.18s var(--ease);white-space:nowrap}
+.btn:hover{border-color:var(--brass);color:var(--brass2)}
+.btn.solid{background:var(--brass);border-color:var(--brass);color:#14120e;font-weight:500}
+.btn.solid:hover{background:var(--brass2);color:#14120e}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.4;cursor:default}
+
+.main{min-height:0;display:grid;grid-template-columns:230px minmax(0,1fr);gap:0}
+.side{border-right:1px solid var(--line2);overflow:auto;padding:18px 16px 30px 0;scrollbar-width:thin}
+.side h3{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.2em;color:var(--ink3);margin:0 0 10px}
+.cat{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border:1px solid transparent;margin-bottom:3px;font-size:13px;transition:.18s var(--ease)}
+.cat:hover{background:var(--panel)}
+.cat.on{background:var(--panel);border-color:color-mix(in srgb,var(--brass) 55%,var(--line2))}
+.cat .n{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.cat .c{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--ink3);width:52px}
+.side .help{margin-top:22px;font-size:11.5px;color:var(--ink3);line-height:1.7;padding-right:6px}
+.side .help code{font-family:var(--mono);font-size:10.5px;color:var(--brass2);background:var(--panel);padding:0 4px}
+
+.body{overflow:auto;padding:18px 0 40px 22px;scrollbar-width:thin}
+.drop{border:1px dashed var(--line);padding:18px 20px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;transition:.2s var(--ease);background:color-mix(in srgb,var(--panel) 60%,transparent)}
+.drop.hot{border-color:var(--brass);background:color-mix(in srgb,var(--brass) 10%,var(--panel))}
+.drop .ic{width:44px;height:44px;border:1px solid var(--line);display:grid;place-items:center;font-family:var(--mono);color:var(--brass2);font-size:18px}
+.drop b{font-family:var(--serif-kr);font-size:15px;font-weight:500}
+.drop p{font-size:12px;color:var(--ink3)}
+.drop .kind{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink2)}
+select,input[type=text]{background:var(--panel2);border:1px solid var(--line2);padding:6px 9px;font-size:12.5px;outline:none;min-width:0}
+select:focus,input[type=text]:focus{border-color:var(--brass)}
+
+.queue{margin-top:12px;border:1px solid var(--line2);display:none}
+.queue.on{display:block}
+.queue .qh{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line2);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--ink3)}
+.queue .qh .sp{flex:1}
+.qr{display:grid;grid-template-columns:56px minmax(0,1.2fr) minmax(0,1fr) 120px 90px 28px;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line2)}
+.qr:last-child{border-bottom:0}
+.qr .th{width:56px;height:56px;background:repeating-conic-gradient(var(--chk1) 0 25%,var(--chk2) 0 50%) 0 0/12px 12px;display:grid;place-items:center;overflow:hidden}
+.qr .th img{max-width:100%;max-height:100%;object-fit:contain}
+.qr .fn{font-size:11px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qr .st{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.qr .st.ok{color:var(--green)} .qr .st.err{color:var(--red)}
+.qr input{width:100%}
+
+.toolbar{display:flex;align-items:center;gap:10px;margin:22px 0 12px}
+.toolbar h2{font-family:var(--serif-kr);font-weight:500;font-size:17px}
+.toolbar .c{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--ink3)}
+.toolbar .sp{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.card{border:1px solid var(--line2);background:var(--panel);display:flex;flex-direction:column;transition:.2s var(--ease);min-width:0}
+.card:hover{border-color:color-mix(in srgb,var(--brass) 60%,var(--line2));transform:translateY(-2px)}
+.card .pv{aspect-ratio:3/4;background:repeating-conic-gradient(var(--chk1) 0 25%,var(--chk2) 0 50%) 0 0/14px 14px;display:grid;place-items:center;overflow:hidden;cursor:zoom-in}
+.card .pv img{max-width:92%;max-height:92%;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3))}
+.card.wide .pv{aspect-ratio:16/10}
+.card.wide .pv img{max-width:100%;max-height:100%;object-fit:cover;width:100%;height:100%;filter:none}
+.card .in{padding:9px 10px 10px;display:grid;gap:4px}
+.card b{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .key{font-family:var(--mono);font-size:10.5px;color:var(--brass2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:copy}
+.card .meta{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.card .act{display:flex;gap:6px;margin-top:4px}
+.card .act .btn{padding:3px 8px;font-size:11px}
+.empty{padding:50px 0;text-align:center;color:var(--ink3);font-size:13px}
+.empty b{display:block;font-family:var(--serif-en);font-size:22px;letter-spacing:.14em;color:var(--ink2);margin-bottom:4px}
+
+.gate{display:grid;place-items:center;height:100%;text-align:center;color:var(--ink2)}
+.gate b{display:block;font-family:var(--serif-en);font-size:26px;letter-spacing:.16em;color:var(--ink);margin-bottom:6px}
+
+#zoom{position:fixed;inset:0;z-index:150;background:rgba(6,7,6,.86);display:none;place-items:center;cursor:zoom-out}
+#zoom.on{display:grid}
+#zoom img{max-width:92vw;max-height:88vh;object-fit:contain}
+#zoom .cap{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:11px;color:#cfc8b8;letter-spacing:.1em}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;background:var(--panel2);border:1px solid var(--brass);padding:9px 16px;font-size:13px;z-index:160;transition:.25s var(--ease);pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+html.lc-embed #app{padding-top:12px}
+@media (max-width:860px){ .main{grid-template-columns:1fr} .side{display:none} .qr{grid-template-columns:48px 1fr 1fr;row-gap:4px} .qr .st,.qr .x{grid-column:auto} .drop{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div><div class="k">LECTERN COMPANY · GM ONLY</div><h1>ARCHIVE<small>자료실</small></h1></div>
+    <span class="sp"></span>
+    <div class="stat">
+      <div>자료<b id="sN">0</b></div>
+      <div>사용량<b id="sMB">0<small> MB</small></b><div class="meter" title="무료 요금제 저장 한도 1GB"><i id="sBar" style="width:0"></i></div></div>
+    </div>
+  </header>
+  <div class="main" id="main"></div>
+</div>
+<div id="zoom"><img alt=""><div class="cap"></div></div>
+<div id="toast"></div>
+
+<script>
+const MAIN_GM_UID='KMQiVU56l0ZABbXwUlRN04vSnQG2';
+const QS=new URLSearchParams(location.search);
+const DEMO = LC_ASSET.DEMO || !window.firebase;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const K=LC_ASSET.KINDS;
+const ORDER=['char','back','sym','identity','ego','gacha','foe','abno','gift','illust','bg','etc'];
+const CODE={char:'CHAR',back:'BACK',sym:'SYM',identity:'ID',ego:'EGO',gacha:'GACHA',foe:'FOE',abno:'ABNO',gift:'GIFT',illust:'ILL',bg:'BG',etc:'ETC'};
+const WIDE=new Set(['ego','illust','bg']);
+const S={kind:QS.get('kind')||'all', queue:[], busy:false};
+let tT=null; function toast(t){ const e=$('#toast'); e.textContent=t; e.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>e.classList.remove('on'),2400); }
+const kb=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':Math.round(n/1024)+' KB';
+const day=t=>{ if(!t) return ''; const d=new Date(t); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; };
+
+function shell(){
+  $('#main').innerHTML=`
+    <aside class="side">
+      <h3>분류</h3><div id="cats"></div>
+      <div class="help">
+        올린 이미지는 <code>asset:분류/이름</code> 으로 어디서나 씁니다.<br>
+        카드의 노란 글씨를 누르면 복사됩니다 — 대본 · 데이터에 그대로 붙여 넣거나 Claude에게 이 이름만 알려 주세요.<br><br>
+        올릴 때 브라우저가 크기를 줄이고 압축합니다 (투명 여백은 자동으로 잘라 냄). 원본은 그대로 남습니다.
+      </div>
+    </aside>
+    <section class="body">
+      <div class="drop" id="drop">
+        <div class="ic">＋</div>
+        <div><b>이미지를 여기로 끌어다 놓기</b><p>여러 장을 한 번에 · 또는 눌러서 고르기 · PNG · JPG · WEBP</p></div>
+        <div class="kind">분류 <select id="kindSel">${ORDER.map(k=>`<option value="${k}">${K[k].kr}</option>`).join('')}</select><button class="btn" id="pickBtn">파일 고르기</button></div>
+      </div>
+      <div class="queue" id="queue"></div>
+      <div class="toolbar"><h2 id="listTitle">전체</h2><span class="c" id="listCount"></span><span class="sp"></span><input type="text" id="q" placeholder="이름 · 키 찾기" style="width:180px"></div>
+      <div class="grid" id="grid"></div>
+    </section>`;
+  const drop=$('#drop');
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot')}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot')}));
+  drop.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
+  $('#pickBtn').onclick=()=>{ const i=document.createElement('input'); i.type='file'; i.accept='image/*'; i.multiple=true; i.onchange=()=>addFiles([...i.files]); i.click(); };
+  $('#kindSel').value = S.kind!=='all' ? S.kind : 'char';
+  $('#kindSel').onchange=()=>{ S.queue.forEach(q=>{ if(!q.done) q.kind=$('#kindSel').value; }); renderQueue(); };
+  $('#q').oninput=renderGrid;
+  LC_ASSET.onIndex(()=>{ renderCats(); renderGrid(); renderStat(); });
+}
+function renderStat(){
+  const L=LC_ASSET.list(); const tot=L.reduce((a,x)=>a+(x.size||0),0)*1.37;   // 데이터베이스에는 글자로 저장 → 약 1.37배
+  $('#sN').textContent=L.length; $('#sMB').innerHTML=`${(tot/1048576).toFixed(1)}<small> MB</small>`;
+  $('#sBar').style.width=Math.min(100,tot/1073741824*100).toFixed(2)+'%';
+}
+function renderCats(){
+  const L=LC_ASSET.list(); const n=k=>L.filter(x=>x.kind===k).length;
+  $('#cats').innerHTML=[['all','ALL','전체',L.length],...ORDER.map(k=>[k,CODE[k],K[k].kr,n(k)])]
+    .map(([k,c,kr,cnt])=>`<button class="cat ${S.kind===k?'on':''}" data-k="${k}"><span class="c">${c}</span>${kr}<span class="n">${cnt}</span></button>`).join('');
+  $$('#cats .cat').forEach(b=>b.onclick=()=>{ S.kind=b.dataset.k; if(S.kind!=='all') $('#kindSel').value=S.kind; renderCats(); renderGrid(); });
+}
+function renderGrid(){
+  const q=($('#q')?.value||'').trim().toLowerCase();
+  const L=LC_ASSET.list(S.kind==='all'?null:S.kind).filter(a=>!q||a.key.includes(q)||String(a.name||'').toLowerCase().includes(q));
+  $('#listTitle').textContent = S.kind==='all'?'전체':K[S.kind].kr; $('#listCount').textContent=`${L.length} ITEMS`;
+  if(!L.length){ $('#grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><b>EMPTY</b>${S.kind==='all'?'아직 올린 자료가 없습니다':'이 분류에 올린 자료가 없습니다'} — 위 칸에 이미지를 끌어다 놓으세요</div>`; return; }
+  $('#grid').innerHTML=L.map(a=>`<div class="card ${WIDE.has(a.kind)?'wide':''}" data-key="${esc(a.key)}">
+      <div class="pv"><img src="asset:${esc(a.key)}" alt=""></div>
+      <div class="in"><b title="${esc(a.name)}">${esc(a.name||a.id)}</b>
+        <span class="key" title="눌러서 복사">asset:${esc(a.key)}</span>
+        <span class="meta">${a.w}×${a.h} · ${kb(a.size||0)} · ${day(a.t)}</span>
+        <div class="act"><button class="btn" data-rep>교체</button><button class="btn danger" data-del>삭제</button></div></div></div>`).join('');
+  $$('#grid .card').forEach(c=>{
+    const key=c.dataset.key, a=LC_ASSET.index()[key];
+    c.querySelector('.key').onclick=()=>{ navigator.clipboard?.writeText('asset:'+key).then(()=>toast('복사했습니다 — asset:'+key),()=>toast('asset:'+key)); };
+    c.querySelector('.pv').onclick=()=>{ const z=$('#zoom'); z.querySelector('img').src='asset:'+key; z.querySelector('.cap').textContent=`${a.name} · asset:${key} · ${a.w}×${a.h}`; z.classList.add('on'); };
+    c.querySelector('[data-rep]').onclick=async()=>{
+      const f=await LC_ASSET.pick(); if(!f) return;
+      try{ toast('교체하는 중…'); await LC_ASSET.upload(f,{kind:a.kind,id:a.id,name:a.name}); toast('교체했습니다 — 쓰던 곳에 바로 반영됩니다'); }catch(e){ toast('교체하지 못했습니다 · '+(e.code||e.message)); }
+    };
+    const d=c.querySelector('[data-del]');
+    d.onclick=async()=>{ if(d.dataset.c!=='1'){ d.dataset.c='1'; d.textContent='정말 삭제?'; setTimeout(()=>{d.dataset.c='';d.textContent='삭제'},3000); return; }
+      try{ await LC_ASSET.remove(key); toast('삭제했습니다'); }catch(e){ toast('삭제하지 못했습니다 · '+(e.code||e.message)); } };
+  });
+}
+$('#zoom').onclick=()=>$('#zoom').classList.remove('on');
+
+/* ---- 올리기 대기열 ---- */
+function addFiles(files){
+  files=files.filter(f=>/^image\//.test(f.type)); if(!files.length) return toast('이미지 파일만 올릴 수 있습니다');
+  const kind=$('#kindSel').value;
+  files.forEach(f=>{ const base=f.name.replace(/\.[^.]+$/,''); S.queue.push({f, kind, name:base, id:LC_ASSET.slug(base), url:URL.createObjectURL(f), st:'', done:false}); });
+  renderQueue();
+}
+function renderQueue(){
+  const Q=$('#queue'); const pend=S.queue.filter(q=>!q.done).length;
+  Q.classList.toggle('on', S.queue.length>0);
+  Q.innerHTML=`<div class="qh">올릴 목록 · ${S.queue.length}<span class="sp"></span>
+      <button class="btn" id="qClear">${pend?'비우기':'닫기'}</button><button class="btn solid" id="qGo" ${pend&&!S.busy?'':'disabled'}>${S.busy?'올리는 중…':pend?`${pend}장 올리기`:'모두 올림'}</button></div>`+
+    S.queue.map((q,i)=>`<div class="qr" data-i="${i}">
+      <div class="th"><img src="${q.url}" alt=""></div>
+      <div><input type="text" data-f="name" value="${esc(q.name)}" placeholder="표시 이름" ${q.done?'disabled':''}><div class="fn">${esc(q.f.name)} · ${kb(q.f.size)}</div></div>
+      <div><input type="text" data-f="id" value="${esc(q.id)}" placeholder="영문 이름 (키)" ${q.done?'disabled':''}><div class="fn mono">asset:${q.kind}/${esc(q.id||'…')}</div></div>
+      <select data-f="kind" ${q.done?'disabled':''}>${ORDER.map(k=>`<option value="${k}" ${k===q.kind?'selected':''}>${K[k].kr}</option>`).join('')}</select>
+      <span class="st ${q.done?'ok':q.err?'err':''}">${q.st||(LC_ASSET.index()[q.kind+'/'+q.id]?'덮어씀':'대기')}</span>
+      <button class="btn x" data-x title="빼기" ${q.done||S.busy?'disabled':''}>✕</button></div>`).join('');
+  $$('#queue [data-f]').forEach(el=>el.oninput=el.onchange=()=>{ const q=S.queue[+el.closest('.qr').dataset.i]; let v=el.value;
+    if(el.dataset.f==='id'){ v=v.toLowerCase().replace(/[^a-z0-9_-]/g,''); if(v!==el.value) el.value=v; }
+    q[el.dataset.f]=v; if(el.dataset.f!=='name'){ const r=el.closest('.qr'); r.querySelector('.fn.mono').textContent=`asset:${q.kind}/${q.id||'…'}`; r.querySelector('.st').textContent=LC_ASSET.index()[q.kind+'/'+q.id]?'덮어씀':'대기'; } });
+  $$('#queue [data-x]').forEach(b=>b.onclick=()=>{ S.queue.splice(+b.closest('.qr').dataset.i,1); renderQueue(); });
+  $('#qClear').onclick=()=>{ if(S.busy) return; S.queue=[]; renderQueue(); };
+  $('#qGo').onclick=uploadAll;
+}
+async function uploadAll(){
+  if(S.busy) return; S.busy=true; renderQueue(); let ok=0;
+  for(const q of S.queue){
+    if(q.done) continue;
+    if(!/^[a-z0-9_-]{1,60}$/.test(q.id)){ q.err=true; q.st='영문 이름 필요'; renderQueue(); continue; }
+    q.st='압축 · 올리는 중'; q.err=false; renderQueue();
+    try{ const r=await LC_ASSET.upload(q.f,{kind:q.kind,id:q.id,name:q.name||q.id}); q.done=true; q.st=`완료 · ${kb(r.size)}`; ok++; }
+    catch(e){ q.err=true; q.st=/PERMISSION/i.test(e.code||e.message||'')?'권한 없음 (규칙 확인)':'실패'; console.warn(e); }
+    renderQueue();
+  }
+  S.busy=false; renderQueue(); if(ok) toast(`${ok}장을 올렸습니다`);
+}
+
+/* ---- 접근: GM만 ---- */
+function gate(msg){ $('#main').innerHTML=`<div class="gate" style="grid-column:1/-1"><div><b>RESTRICTED</b>${msg}</div></div>`; }
+if(DEMO){ shell(); }
+else{
+  if(!firebase.apps.length) firebase.initializeApp({apiKey:"AIzaSyARSLd9Xs7s98PTf6ht5gVtJM2OBe3Sobw",authDomain:"lectern-company.firebaseapp.com",databaseURL:"https://lectern-company-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"lectern-company",storageBucket:"lectern-company.firebasestorage.app",messagingSenderId:"719328977812",appId:"1:719328977812:web:5159887c26083d2c6fa581"});
+  gate('계정 확인 중…');
+  firebase.auth().onAuthStateChanged(async u=>{
+    if(!u) return gate('로그인이 필요합니다 — 로비에서 로그인한 뒤 다시 열어 주세요');
+    let v=null; try{ v=(await firebase.database().ref('users/'+u.uid).once('value')).val(); }catch(e){}
+    const gm = u.uid===MAIN_GM_UID || (v && (v.role==='GM' || v.main===true));
+    if(!gm) return gate('자료실은 GM 계정만 열 수 있습니다');
+    shell();
+  });
+}
+</script>
+</body>
+</html>

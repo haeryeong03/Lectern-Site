@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lectern Company — 인사 기록철</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<script>
+  // 테마는 그리기 전에 먼저 정함 (깜빡임 방지)
+  (function(){ var q=new URLSearchParams(location.search), t=q.get('theme');
+    if(!t){ try{ t=(JSON.parse(localStorage.getItem('lc-lobby-prefs')||'{}').theme); }catch(e){} }
+    document.documentElement.dataset.theme = (t==='light')?'light':'dark'; })();
+</script>
+<script src="../lc-bridge.js"></script>
+<script src="../lc-assets.js"></script>
+<style>
+:root{
+  --serif-en:'Cormorant Garamond','Noto Serif KR',serif;
+  --serif-kr:'Noto Serif KR','Cormorant Garamond',serif;
+  --sans:'Pretendard','Noto Sans KR',system-ui,sans-serif;
+  --mono:'IBM Plex Mono','Noto Sans KR',monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+html[data-theme="dark"]{
+  --bg:#121412; --bg2:#0d0f0d; --panel:#1C1F1C; --panel2:#232723; --paper:#e9e2d0; --paper2:#ddd4bd; --paper-ink:#1f1d18; --paper-ink2:#5a5446;
+  --ink:#E9E4D8; --ink2:#B9B4A8; --ink3:#7d7f77; --line:#5A5C55; --line2:#33362f;
+  --green:#2E7D52; --brass:#B08D57; --brass2:#d4b47c; --red:#E04450; --shadow:rgba(0,0,0,.55); --grain:.06;
+}
+html[data-theme="light"]{
+  --bg:#EDE8DD; --bg2:#e3ddcf; --panel:#F6F2EA; --panel2:#fbf8f2; --paper:#fbf7ec; --paper2:#efe7d2; --paper-ink:#1C1C1A; --paper-ink2:#5d574a;
+  --ink:#1C1C1A; --ink2:#4a4842; --ink3:#8C877C; --line:#8C877C; --line2:#cfc8b8;
+  --green:#043A1E; --brass:#9A7A45; --brass2:#7c6033; --red:#C8323C; --shadow:rgba(60,45,20,.25); --grain:.08;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono);letter-spacing:.04em}
+::selection{background:var(--brass);color:#111}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:var(--grain);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto 1fr;grid-template-columns:minmax(0,1fr);max-width:1400px;margin:0 auto;padding:18px 26px 0}
+
+/* ── 머리 ── */
+.hd{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding-bottom:14px}
+.hd .ttl .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--ink3)}
+.hd .ttl h1{font-family:var(--serif-en);font-weight:600;font-size:30px;letter-spacing:.12em;line-height:1.05}
+.hd .ttl h1 small{font-family:var(--serif-kr);font-size:15px;letter-spacing:.04em;font-weight:500;color:var(--ink2);margin-left:10px}
+.hd .sp{flex:1}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);padding:7px 11px;min-width:220px;background:color-mix(in srgb,var(--panel) 70%,transparent)}
+.search input{background:none;border:0;outline:0;width:100%;font-size:13px}
+.search svg{flex:none;opacity:.6}
+.viewer{display:flex;align-items:center;gap:9px;border:1px solid var(--line2);padding:6px 11px 6px 8px;font-size:12px;max-width:340px}
+.viewer .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent);flex:none}
+.viewer.gm .dot{background:var(--brass);box-shadow:0 0 0 3px color-mix(in srgb,var(--brass) 25%,transparent)}
+.viewer.guest .dot{background:var(--ink3);box-shadow:none}
+.viewer b{font-weight:600}
+.viewer .mono{font-size:10px;color:var(--ink3);display:block;line-height:1.3}
+.gm-tools{display:flex;gap:6px}
+.btn{border:1px solid var(--line);padding:6px 11px;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:.18s var(--ease)}
+.btn:hover{border-color:var(--brass);color:var(--brass2)}
+.btn.brass{border-color:var(--brass);color:var(--brass2)}
+.btn.solid{background:var(--brass);border-color:var(--brass);color:#16130c}
+.btn.solid:hover{filter:brightness(1.1);color:#16130c}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+/* ── 서랍: 파일첩 탭 ── */
+.drawer{position:relative;display:flex;align-items:flex-end;gap:4px;padding-left:6px;height:58px;z-index:2}
+.drawer::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line2)}
+.ftab{--c:#888;position:relative;height:44px;min-width:0;flex:0 0 auto;max-width:300px;padding:0 18px 0 16px;display:flex;align-items:center;gap:10px;
+  background:color-mix(in srgb,var(--c) 22%,var(--panel));color:var(--ink2);
+  clip-path:polygon(0 100%,8px 6px,14px 0,calc(100% - 26px) 0,calc(100% - 18px) 6px,100% 100%);
+  transform:translateY(6px);transition:transform .28s var(--ease),background .2s,color .2s,height .28s var(--ease)}
+.ftab::after{content:"";position:absolute;left:10px;right:20px;top:0;height:3px;background:var(--c);opacity:.75}
+.ftab:hover{transform:translateY(2px);color:var(--ink)}
+.ftab.on{transform:translateY(1px);height:52px;background:var(--fold);color:var(--ink);z-index:3}
+.ftab.on::after{opacity:1;height:4px}
+.ftab .code{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 60%,transparent);padding:1px 5px;flex:none}
+.ftab .nm{font-family:var(--serif-en);font-size:16.5px;font-weight:600;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftab .nm.kr{font-family:var(--serif-kr);font-size:14px;font-weight:700}
+.ftab .ct{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink3);flex:none}
+.ftab.sealed .nm{letter-spacing:.2em}
+
+/* ── 펼친 파일첩 ── */
+.fold{--c:#888;position:relative;min-height:0;display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr);background:var(--fold);border-top:4px solid var(--c);
+  box-shadow:0 -1px 0 color-mix(in srgb,var(--c) 30%,transparent),0 20px 50px var(--shadow)}
+html[data-theme="dark"]{--fold:#1b1f1c}
+html[data-theme="light"]{--fold:#f4efe3}
+.fold::before{content:"";position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(180deg,color-mix(in srgb,var(--c) 9%,transparent),transparent 220px),
+  repeating-linear-gradient(0deg,transparent 0 27px,color-mix(in srgb,var(--line2) 35%,transparent) 27px 28px);opacity:.9}
+.fhead{position:relative;display:flex;align-items:flex-end;gap:16px;padding:18px 24px 0;flex-wrap:wrap}
+.fhead .gname{font-family:var(--serif-en);font-size:24px;font-weight:600;letter-spacing:.08em;line-height:1}
+.fhead .gname.kr{font-family:var(--serif-kr);font-size:20px}
+.fhead .gsub{font-family:var(--mono);font-size:10.5px;color:var(--ink3);letter-spacing:.14em;margin-top:6px}
+.fhead .stamp{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--c);border:1.5px solid var(--c);padding:3px 8px;transform:rotate(-2deg);opacity:.85}
+/* 부서 칸막이 */
+.divs{position:relative;display:flex;gap:2px;padding:14px 24px 0;flex-wrap:wrap;border-bottom:1px solid var(--line2)}
+.dv{position:relative;padding:7px 14px 8px;font-size:12.5px;color:var(--ink2);border:1px solid var(--line2);border-bottom:0;background:color-mix(in srgb,var(--panel) 75%,transparent);
+  display:flex;align-items:baseline;gap:7px;transform:translateY(1px);transition:.18s var(--ease)}
+.dv b{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.08em;color:var(--ink)}
+.dv i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.dv:hover{color:var(--ink);background:var(--panel2)}
+.dv.on{background:var(--fold);border-color:var(--c);border-top-width:2px;color:var(--ink)}
+.dv.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--fold)}
+.dv.sealed{background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--line2) 55%,transparent) 6px 7px);color:var(--ink3)}
+.dv.sealed b{color:var(--ink3)}
+.body{position:relative;overflow:auto;padding:20px 24px 40px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.subhead{display:flex;align-items:baseline;gap:12px;margin:2px 0 16px;flex-wrap:wrap}
+.subhead h3{font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.16em}
+.subhead span{font-size:12.5px;color:var(--ink2)}
+.subhead .mono{font-size:10px;color:var(--ink3);margin-left:auto}
+
+/* ── 인물 카드 ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:16px}
+.card{--cc:#888;position:relative;text-align:left;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line2);
+  transition:transform .25s var(--ease),box-shadow .25s,border-color .2s;animation:cardIn .45s var(--ease) both;animation-delay:calc(var(--i,0)*35ms)}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--cc) 70%,var(--line));box-shadow:0 14px 30px var(--shadow)}
+.card:focus-visible{outline:2px solid var(--cc);outline-offset:2px}
+.card .ph{position:relative;height:262px;overflow:hidden;background:
+  radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--cc) 30%,transparent),transparent 70%),var(--panel2);border-bottom:1px solid var(--line2)}
+.card .ph img.st{position:absolute;left:0;right:0;top:22px;bottom:6px;width:100%;height:calc(100% - 28px);object-fit:contain;object-position:center bottom;transform-origin:50% 100%;transition:transform .5s var(--ease);filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.card .ph::after{content:"";position:absolute;left:18%;right:18%;bottom:4px;height:10px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent);pointer-events:none}
+.card:hover .ph img.st{transform:scale(1.035)}
+.card .ph .mono-l{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--serif-en);font-size:64px;font-weight:600;color:color-mix(in srgb,var(--cc) 60%,var(--ink3));opacity:.55}
+.card .ph .hatch{position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 9px,color-mix(in srgb,var(--line2) 70%,transparent) 9px 10px)}
+.card .ph .na{position:absolute;left:10px;bottom:8px;font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--ink3)}
+.card .sym{position:absolute;right:8px;bottom:8px;width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+.card .tagrow{position:absolute;left:0;top:0;display:flex}
+.card .tg{font-family:var(--mono);font-size:10px;letter-spacing:.12em;background:var(--cc);color:var(--cc-ink,#111);padding:3px 8px}
+.card .tt{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;background:var(--bg);color:var(--ink2);padding:3px 7px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.card .meta{padding:11px 13px 13px;display:flex;flex-direction:column;gap:3px;flex:1;border-left:3px solid var(--cc)}
+.card .nm{font-family:var(--serif-kr);font-size:16px;font-weight:700;line-height:1.25}
+.card .en{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--ink3)}
+.card .ln{font-size:12px;color:var(--ink2);line-height:1.5;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .note{font-size:11.5px;color:var(--ink2);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line2);line-height:1.5}
+.card .badges{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.bdg{font-family:var(--mono);font-size:9px;letter-spacing:.14em;padding:2px 6px;border:1px solid;background:color-mix(in srgb,var(--bg) 70%,transparent)}
+.bdg.mine{color:var(--brass2);border-color:var(--brass)}
+.bdg.wait{color:var(--ink2);border-color:var(--line)}
+.bdg.hid{color:var(--red);border-color:var(--red)}
+.card.hidden-entry{opacity:.55}
+.card.add{align-items:center;justify-content:center;min-height:250px;border-style:dashed;color:var(--ink3);gap:8px;font-size:12.5px;animation:none}
+.card.add:hover{color:var(--brass2);border-color:var(--brass)}
+.card.add .plus{font-family:var(--serif-en);font-size:40px;line-height:1}
+
+/* 빈 칸 / 봉인 */
+.empty{display:grid;place-items:center;min-height:320px;text-align:center}
+.seal{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:420px}
+.seal .wax{width:94px;height:94px;border-radius:50%;display:grid;place-items:center;position:relative;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c) 85%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 60%,#000));
+  box-shadow:0 6px 16px var(--shadow), inset 0 -4px 8px rgba(0,0,0,.25)}
+.seal .wax::before{content:"";position:absolute;inset:9px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.45)}
+.seal .wax span{font-family:var(--serif-en);font-size:30px;font-weight:600;color:rgba(255,255,255,.88);letter-spacing:.06em}
+.seal h4{font-family:var(--mono);font-weight:500;letter-spacing:.2em;font-size:12px}
+.seal p{font-size:12.5px;color:var(--ink2)}
+.seal .bars{display:flex;flex-direction:column;gap:7px;width:260px;margin-top:4px}
+.seal .bars i{height:9px;background:var(--line2)}
+
+/* Canto */
+.canto-hd{position:relative;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:16px 18px;margin-bottom:18px;border:1px solid var(--line2);background:var(--panel);overflow:hidden}
+.canto-hd::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cc)}
+.canto-hd .no{font-family:var(--serif-en);font-size:54px;font-weight:600;line-height:.9;color:var(--cc);padding-left:8px;min-width:70px;text-align:center}
+.canto-hd .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ink3)}
+.canto-hd h4{font-family:var(--serif-kr);font-size:20px;font-weight:700;line-height:1.3}
+.canto-hd p{font-size:12.5px;color:var(--ink2);margin-top:4px}
+.canto-hd .gm{position:absolute;right:12px;top:10px}
+
+/* ── 기록 문서 ── */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .3s;z-index:50;backdrop-filter:blur(2px)}
+.scrim.on{opacity:1;pointer-events:auto}
+.doc{--cc:#888;position:fixed;top:0;bottom:0;right:0;width:min(820px,100vw);z-index:60;display:flex;flex-direction:column;
+  transform:translateX(104%);transition:transform .45s var(--ease);background:var(--paper);color:var(--paper-ink);box-shadow:-30px 0 60px var(--shadow)}
+.doc.on{transform:none}
+.doc::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;background:
+  radial-gradient(130% 80% at 100% 0%,color-mix(in srgb,var(--cc) 12%,transparent),transparent 60%),
+  linear-gradient(90deg,rgba(0,0,0,.06),transparent 18px)}
+.doc-top{position:relative;display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid rgba(0,0,0,.15);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--paper-ink2)}
+.doc-top .sp{flex:1}
+.doc-top button{width:30px;height:30px;display:grid;place-items:center;border:1px solid rgba(0,0,0,.2);color:var(--paper-ink)}
+.doc-top button:hover{border-color:var(--paper-ink)}
+.doc-top button:disabled{opacity:.3;cursor:default}
+.doc-scroll{position:relative;overflow:auto;flex:1;padding:26px 32px 60px;scrollbar-width:thin}
+.doc-hd{display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:start}
+.photo{position:relative;height:340px;border:1px solid rgba(0,0,0,.25);background:
+  radial-gradient(90% 60% at 50% 20%,color-mix(in srgb,var(--cc) 35%,transparent),transparent 75%),var(--paper2);overflow:hidden}
+.photo img.st{position:absolute;left:0;right:0;bottom:0;margin:auto;height:96%;width:100%;object-fit:contain;transition:opacity .3s}
+.photo .clip{position:absolute;top:-6px;left:50%;width:46px;height:18px;transform:translateX(-50%);background:linear-gradient(#b9b9b9,#7b7b7b);border-radius:3px 3px 0 0;box-shadow:0 2px 3px rgba(0,0,0,.3)}
+.photo .flip{position:absolute;right:6px;bottom:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;padding:3px 7px;background:rgba(255,255,255,.7);color:#222;border:1px solid rgba(0,0,0,.2)}
+.photo .none{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--paper-ink2);
+  background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(0,0,0,.06) 10px 11px)}
+.photo .none b{display:block;font-family:var(--serif-en);font-size:72px;letter-spacing:0;color:color-mix(in srgb,var(--cc) 70%,#555);opacity:.6;text-align:center;line-height:1}
+.doc-id .tg{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em}
+.doc-id .tg span{padding:2px 8px;border:1px solid var(--paper-ink2)}
+.doc-id .tg span.c{background:var(--cc);border-color:var(--cc);color:var(--cc-ink,#111)}
+.doc-id h2{font-family:var(--serif-kr);font-size:34px;font-weight:700;line-height:1.15;margin-top:12px}
+.doc-id .en{font-family:var(--serif-en);font-size:17px;letter-spacing:.18em;color:var(--paper-ink2);font-style:italic}
+.doc-id .ln{margin-top:14px;padding:10px 14px;border-left:3px solid var(--cc);background:rgba(0,0,0,.04);font-family:var(--serif-kr);font-size:14.5px;line-height:1.65}
+.doc-sym{position:absolute;right:30px;top:20px;width:86px;height:86px;object-fit:contain;transform:rotate(8deg);opacity:.9;filter:drop-shadow(0 3px 5px rgba(0,0,0,.25))}
+.kv{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+.kv th{width:112px;text-align:left;font-weight:500;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--paper-ink2);padding:6px 10px 6px 0;vertical-align:top;border-bottom:1px dotted rgba(0,0,0,.2)}
+.kv td{padding:6px 0;border-bottom:1px dotted rgba(0,0,0,.2);line-height:1.55}
+.kv tr.lock th{color:#8b2a2a}
+.sec{margin-top:26px}
+.sec h3{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.2em;color:var(--paper-ink2);margin-bottom:10px}
+.sec h3::after{content:"";flex:1;height:1px;background:rgba(0,0,0,.18)}
+.sec h3 i{font-style:normal;color:var(--paper-ink);font-family:var(--serif-kr);font-size:15px;letter-spacing:.02em;font-weight:700}
+.md p{margin:6px 0;line-height:1.75}
+.md p.lead{font-family:var(--serif-kr);font-size:14.5px;padding:10px 14px;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.25);margin:4px 0 12px}
+.md h5{font-family:var(--serif-kr);font-size:14px;font-weight:700;margin:16px 0 6px;color:var(--paper-ink)}
+.md ul{list-style:none;margin:4px 0}
+.md li{position:relative;padding-left:16px;margin:4px 0;line-height:1.7}
+.md li::before{content:"";position:absolute;left:3px;top:.72em;width:5px;height:5px;background:var(--cc);transform:rotate(45deg)}
+.md .rel{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:7px 0;border-bottom:1px dotted rgba(0,0,0,.2)}
+.md .rel b{font-family:var(--serif-kr);font-weight:700}
+.md table{width:100%;border-collapse:collapse;margin:4px 0}
+.md table th{width:120px;text-align:left;font-weight:600;padding:5px 10px 5px 0;vertical-align:top;border-bottom:1px dotted rgba(0,0,0,.2);font-size:13px}
+.md table td{padding:5px 0;border-bottom:1px dotted rgba(0,0,0,.2)}
+.md b{font-weight:700}
+/* 기밀 */
+.conf{position:relative;margin-top:34px;border:1.5px solid #8b2a2a;padding:18px 20px 20px}
+.conf-k{position:absolute;top:-10px;left:14px;background:var(--paper);padding:0 8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:#8b2a2a;display:flex;gap:8px;align-items:center}
+.conf .ok-stamp{position:absolute;right:16px;top:-16px;transform:rotate(6deg);font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:#8b2a2a;border:2px solid #8b2a2a;padding:4px 9px;background:var(--paper);box-shadow:0 0 0 2px var(--paper)}
+.conf .sec:first-of-type{margin-top:6px}
+.redact{display:flex;flex-direction:column;gap:9px;padding:6px 0 2px}
+.redact i{display:block;height:13px;background:var(--paper-ink);opacity:.86}
+.redact i.s{height:9px;opacity:.55;background:#8b2a2a}
+.redact-note{margin-top:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:#8b2a2a;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wait-stamp{display:inline-block;margin-top:24px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--paper-ink2);border:1.5px dashed var(--paper-ink2);padding:8px 14px;transform:rotate(-1.5deg)}
+.doc-foot{margin-top:40px;padding-top:12px;border-top:1px solid rgba(0,0,0,.18);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--paper-ink2)}
+.doc .gm-row{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}
+.doc .btn{border-color:rgba(0,0,0,.3);color:var(--paper-ink)}
+.doc .btn:hover{border-color:var(--paper-ink);color:var(--paper-ink)}
+.appear{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.appear button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:4px 9px;border:1px solid rgba(0,0,0,.25)}
+.appear button:hover{border-color:var(--paper-ink)}
+
+/* ── 편집 창 ── */
+.modal{position:fixed;inset:0;z-index:80;display:none;place-items:center;background:rgba(0,0,0,.5);padding:20px}
+.modal.on{display:grid}
+.mbox{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);box-shadow:0 30px 70px var(--shadow);padding:20px 22px}
+.mbox h4{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.18em;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.mbox h4 .sp{flex:1}
+.fl{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start;margin-bottom:10px}
+.fl>label{font-size:12px;color:var(--ink2);padding-top:7px}
+.fl>label small{display:block;font-size:10.5px;color:var(--ink3);line-height:1.4;margin-top:2px}
+.fl input,.fl textarea,.fl select{width:100%;background:var(--bg);border:1px solid var(--line2);padding:7px 9px;font-size:13px;outline:0}
+.fl input:focus,.fl textarea:focus,.fl select:focus{border-color:var(--brass)}
+.fl textarea{min-height:90px;resize:vertical;font-family:var(--mono);font-size:12px;line-height:1.6}
+.fl textarea.tall{min-height:200px}
+.fl textarea.priv{border-color:color-mix(in srgb,var(--red) 50%,var(--line2))}
+.mrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.imgset{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.imgslot{border:1px solid var(--line2);padding:8px;display:grid;gap:6px;justify-items:center;text-align:center}
+.imgslot .pv{width:100%;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;background:color-mix(in srgb,var(--line2) 35%,transparent)}
+.imgslot .pv.round{width:64px;aspect-ratio:1;border-radius:50%}
+.imgslot .pv img{max-width:100%;max-height:100%;object-fit:contain}
+.imgslot .pv i{font-style:normal;font-size:11px;color:var(--ink3)}
+.imgslot b{font-size:11.5px;font-weight:500}
+.imgslot .ib{display:flex;gap:4px;justify-content:center}
+.btn.sm{padding:3px 8px;font-size:11px}
+.help{font-size:11.5px;color:var(--ink3);line-height:1.6;border-left:2px solid var(--line2);padding-left:10px;margin:4px 0 14px}
+.help code{font-family:var(--mono);color:var(--ink2)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;z-index:120;background:var(--panel);border:1px solid var(--brass);padding:9px 16px;font-size:12.5px;transition:.3s var(--ease);pointer-events:none;box-shadow:0 10px 30px var(--shadow)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* 통합 사이트 안: 위쪽 여백 조금 */
+html.lc-embed #app{padding-top:14px}
+
+@media (max-width:820px){
+  #app{padding:12px 12px 0}
+  .hd .ttl h1{font-size:23px}
+  .hd .ttl h1 small{display:block;margin:4px 0 0}
+  .hd{gap:8px}
+  .hd .ttl{flex:1 1 100%}
+  .hd .sp{display:none}
+  .search{min-width:0;flex:1 1 100%}
+  .viewer{max-width:none;flex:1 1 0;min-width:0}
+  .viewer .mono{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gm-tools .btn{white-space:nowrap;font-size:11px}
+  .drawer{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;height:56px}
+  .ftab{flex:0 0 auto;padding:0 16px 0 12px}
+  .ftab .nm{font-size:14px}
+  .fhead{padding:14px 14px 0}
+  .divs{padding:12px 14px 0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .dv{flex:none}
+  .body{padding:16px 14px 40px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:11px}
+  .card .ph{height:228px}
+  .doc-scroll{padding:20px 18px 50px}
+  .doc-hd{grid-template-columns:1fr}
+  .photo{height:300px;max-width:260px}
+  .doc-sym{width:60px;height:60px;right:18px;top:14px}
+  .md .rel{grid-template-columns:1fr;gap:2px}
+  .fl{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div class="ttl">
+      <div class="k">[ 04. ] PERSONNEL FILE · LC-PF</div>
+      <h1>PERSONNEL FILE<small>인사 기록철</small></h1>
+    </div>
+    <div class="sp"></div>
+    <label class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="이름 · 번호 · 소속 검색" autocomplete="off"></label>
+    <div class="viewer" id="viewer"></div>
+    <div class="gm-tools" id="gmtools"></div>
+  </header>
+  <nav class="drawer" id="drawer" aria-label="기록철 분류"></nav>
+  <section class="fold" id="fold">
+    <div>
+      <div class="fhead" id="fhead"></div>
+      <div class="divs" id="divs" role="tablist"></div>
+    </div>
+    <div class="body" id="body"></div>
+  </section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="doc" id="doc" aria-hidden="true">
+  <div class="doc-top">
+    <span id="doc-no">LC-PF</span><span class="sp"></span>
+    <button id="doc-prev" title="이전 기록 (←)" aria-label="이전 기록">‹</button>
+    <button id="doc-next" title="다음 기록 (→)" aria-label="다음 기록">›</button>
+    <button id="doc-x" title="닫기 (Esc)" aria-label="닫기">✕</button>
+  </div>
+  <div class="doc-scroll" id="doc-body"></div>
+</aside>
+
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<input type="file" id="file" accept=".json,application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+/* =========================================================
+   Lectern Company — 캐릭터 소개 (인사 기록철) v1.0
+   · 공개 기록: data.js (+ GM이 고친 내용은 dossier/public)
+   · 🔒 비공개 기록: dossier/private/{인물} — 서버 규칙이 본인 계정 + GM에게만 내려 줌
+     (이 파일 · data.js 안에는 비공개 내용이 한 줄도 없음)
+   ========================================================= */
+const FB_CONFIG = {
+  apiKey: "AIzaSyARSLd9Xs7s98PTf6ht5gVtJM2OBe3Sobw",
+  authDomain: "lectern-company.firebaseapp.com",
+  databaseURL: "https://lectern-company-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "lectern-company",
+  storageBucket: "lectern-company.firebasestorage.app",
+  messagingSenderId: "719328977812",
+  appId: "1:719328977812:web:5159887c26083d2c6fa581"
+};
+const MAIN_GM_UID='KMQiVU56l0ZABbXwUlRN04vSnQG2';
+const QS = new URLSearchParams(location.search);
+const DEMO = !window.firebase || QS.has('demo');
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ── 상태 ── */
+const SEED = window.DOSSIER || {groups:[],chars:[],cantos:[]};
+const S = {
+  group: 'lc', sub: 'LCB', canto: null, q: '',
+  ov: {}, cantoOv: {},            // GM이 고친 공개 기록 / Canto
+  priv: {},                       // id → {state:'ok'|'denied'|'empty'|'loading', data}
+  demoPriv: null,                 // 시안 모드에서 불러온 비공개 파일 (이 화면에서만)
+  viewer: {label:'', role:'guest', gm:false, chars:[], npcChar:null, ready:false},
+  open: null, back: false, list: [],
+};
+let DB=null, AUTH=null;
+
+/* ── 열람자 ── */
+function setViewer(v){ S.viewer = Object.assign({label:'',role:'guest',gm:false,chars:[],npcChar:null,ready:true}, v); S.priv={}; renderAll(); if(S.open) openDoc(S.open,true); if(DEMO && S.viewer.gm) demoAutoLoad(); }
+// 시안 모드 + GM: zip을 푼 폴더 그대로 열었으면 GM_전용 파일을 찾아 자동으로 읽음 (사이트에 올린 주소에는 이 파일이 없음)
+let demoTried=false;
+async function demoAutoLoad(){
+  if(demoTried || S.demoPriv) return; demoTried=true;
+  for(const u of ['../../GM_전용/dossier_private_seed.json','../GM_전용/dossier_private_seed.json']){
+    try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) continue; const j=await r.json();
+      if(j && j.kind==='lectern-dossier-private'){ S.demoPriv=j.private; S.priv={}; if(S.open) openDoc(S.open,true); return; } }catch(e){}
+  }
+}
+function owns(id){ const v=S.viewer; return !!(v.chars||[]).includes(id) || v.npcChar===id; }
+function canSee(id){ return S.viewer.gm || owns(id); }
+
+/* ── 데이터 합치기 ── */
+function groups(){ return SEED.groups; }
+function gOf(id){ return SEED.groups.find(g=>g.id===id); }
+function allChars(){
+  const map = new Map(SEED.chars.map(c=>[c.id,{...c}]));
+  Object.entries(S.ov||{}).forEach(([id,o])=>{ if(!o) return; map.set(id, Object.assign(map.get(id)||{id,order:99,facts:[],sections:[]}, norm(o), {id, edited:true})); });
+  return [...map.values()];
+}
+function norm(o){ const r={...o}; ['facts','sections'].forEach(k=>{ if(r[k] && !Array.isArray(r[k])) r[k]=Object.keys(r[k]).sort((a,b)=>a-b).map(i=>r[k][i]); }); return r; }
+function visible(c){ return !c.hidden || S.viewer.gm; }
+function charsIn(g,sub){ return allChars().filter(c=>c.group===g && (!sub || c.sub===sub) && visible(c)).sort((a,b)=>(a.order||99)-(b.order||99) || a.name.localeCompare(b.name,'ko')); }
+function charById(id){ return allChars().find(c=>c.id===id); }
+function cantos(){
+  const map=new Map(SEED.cantos.map(c=>[c.id,{...c}]));
+  Object.entries(S.cantoOv||{}).forEach(([id,o])=>{ if(o) map.set(id,Object.assign(map.get(id)||{id},o,{id})); });
+  return [...map.values()].filter(c=>!c.hidden || S.viewer.gm).sort((a,b)=>(a.sort??parseFloat(a.no)??0)-(b.sort??parseFloat(b.no)??0));
+}
+function castArr(x){ if(!x) return null; if(Array.isArray(x)) return x; return Object.keys(x).sort((a,b)=>a-b).map(k=>x[k]); }
+
+/* ── 색 ── */
+const dark = ()=>document.documentElement.dataset.theme!=='light';
+function ccol(c){ return dark() ? (c.colorD||c.color||'#888') : (c.colorL||c.color||'#888'); }
+function paperCol(c){ const x=c.colorL||c.color||'#888'; const h=x.replace('#',''); const n=parseInt(h,16); const l=(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255)); return l>190?'#8a7a4a':x; }
+function inkOn(hex){ const h=(hex||'#888').replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
+  const l=(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255)); return l>150?'#141410':'#f5f1e6'; }
+function gcol(g){ return dark()?g.color:(g.colorL||g.color); }
+
+/* ── 본문 표기 → HTML ── */
+function inline(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>'); }
+function md(src){
+  const out=[]; let mode=null;
+  const close=()=>{ if(mode==='ul') out.push('</ul>'); if(mode==='tb') out.push('</table>'); mode=null; };
+  String(src||'').split('\n').forEach(raw=>{
+    const l=raw.trim(); if(!l){ close(); return; }
+    if(l.startsWith('- ')){ if(mode!=='ul'){ close(); out.push('<ul>'); mode='ul'; } out.push('<li>'+inline(l.slice(2))+'</li>'); return; }
+    if(l.startsWith('= ')){ const [k,...v]=l.slice(2).split('|'); if(mode!=='tb'){ close(); out.push('<table>'); mode='tb'; } out.push(`<tr><th>${inline(k.trim())}</th><td>${inline(v.join('|').trim())}</td></tr>`); return; }
+    close();
+    if(l.startsWith('## ')) out.push('<h5>'+inline(l.slice(3))+'</h5>');
+    else if(l.startsWith('> ')) out.push('<p class="lead">'+inline(l.slice(2))+'</p>');
+    else if(l.startsWith('@ ')){ const [k,...v]=l.slice(2).split('|'); out.push(`<div class="rel"><b>${inline(k.trim())}</b><span>${inline(v.join('|').trim())}</span></div>`); }
+    else out.push('<p>'+inline(l)+'</p>');
+  });
+  close(); return out.join('');
+}
+/* 스탠딩 · 심볼 — 자료실에 올린 이미지(imgA · backA · symA = asset:…)가 있으면 그것을, 없으면 사이트 기본 파일 */
+function stImg(c,back){ if(back&&c.backA) return c.backA; if(c.imgA&&!(back&&c.back)) return c.imgA; const n=typeof c.img==='string'?c.img:c.id; return `../img/standing/${n}${back&&c.back?'_b':''}.webp`; }
+const hasImg=c=>!!(c.img||c.imgA), hasBack=c=>!!(c.back||c.backA);
+function symSrc(c){ return c.symA || (c.sym?`../img/symbol/${c.id}.webp`:''); }
+function hash(s){ let h=2166136261; for(const ch of String(s)){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+
+/* =========================================================
+   그리기
+   ========================================================= */
+function renderAll(){ renderHead(); renderDrawer(); renderFold(); }
+
+function renderHead(){
+  const v=S.viewer, el=$('#viewer');
+  el.className='viewer '+(v.gm?'gm':v.role==='guest'?'guest':'');
+  const mine=(v.chars||[]).concat(v.npcChar?[v.npcChar]:[]).map(id=>charById(id)).filter(Boolean).map(c=>c.name);
+  el.innerHTML = v.role==='guest'
+    ? `<span class="dot"></span><span><b>${DEMO?'시안 모드':'로그인 전'}</b><span class="mono">🔒 비공개 기록 열람 불가</span></span>`
+    : `<span class="dot"></span><span><b>${esc(v.label||'열람자')}</b> · ${v.gm?'GM':v.role==='NPC'?'NPC 담당':'PL'}<span class="mono">${v.gm?'🔒 모든 비공개 기록 열람':mine.length?'🔒 본인 기록 열람 · '+esc(mine.join(', ')):'🔒 열람 가능한 비공개 기록 없음'}</span></span>`;
+  const t=$('#gmtools');
+  t.innerHTML = (v.gm && !DEMO) ? `<button class="btn brass" id="b-upload" title="GM_전용 폴더의 dossier_private_seed.json">🔒 비공개 기록 올리기</button>`
+              : DEMO ? `<button class="btn" id="b-demo" title="GM_전용/dossier_private_seed.json — 이 화면에서만 미리보기">시안: 비공개 파일 열기</button>` : '';
+  const b=$('#b-upload')||$('#b-demo'); if(b) b.onclick=()=>$('#file').click();
+}
+
+function renderDrawer(){
+  $('#drawer').innerHTML = groups().map(g=>{
+    const n = g.id==='canto' ? cantos().length : charsIn(g.id).length;
+    const kr = /[가-힣]/.test(g.name);
+    return `<button class="ftab ${g.id===S.group&&!S.q?'on':''} ${g.sealedGroup?'sealed':''}" style="--c:${gcol(g)}" data-g="${g.id}" role="tab" aria-selected="${g.id===S.group}">
+      <span class="code">${esc(g.code)}</span><span class="nm ${kr?'kr':''}">${esc(g.name)}</span><span class="ct">${g.id==='canto'?n+' 편':g.sealedGroup&&!n?'—':n}</span></button>`;
+  }).join('');
+  $('#drawer').querySelectorAll('.ftab').forEach(b=>b.onclick=()=>{ $('#q').value=''; S.q=''; selectGroup(b.dataset.g); });
+}
+function selectGroup(gid){
+  const g=gOf(gid); if(!g) return; S.group=gid;
+  if(gid==='canto'){ const cs=cantos(); S.canto = cs.find(c=>c.id===S.canto)?S.canto:(cs[0]&&cs[0].id); }
+  else{ const subs=(g.subs||[]); if(!subs.find(s=>s.id===S.sub)) S.sub=(subs.find(s=>!s.sealed)||subs[0]||{}).id||null; }
+  renderDrawer(); renderFold();
+}
+
+function renderFold(){
+  const g=gOf(S.group), fold=$('#fold'); fold.style.setProperty('--c', gcol(g));
+  if(S.q) return renderSearch();
+  const kr=/[가-힣]/.test(g.name);
+  $('#fhead').innerHTML = `<div><div class="gname ${kr?'kr':''}">${esc(g.name)}</div><div class="gsub">${esc(g.kr)}${g.id==='lc'?' · 부서별 분류':''}</div></div>
+    <span class="stamp">${g.sealedGroup?'CLASSIFIED':g.id==='canto'?'STORY INDEX':'PERSONNEL'}</span>`;
+  // 칸막이
+  let divs='';
+  if(g.id==='canto'){
+    divs = cantos().map(c=>`<button class="dv ${c.id===S.canto?'on':''}" data-c="${c.id}"><b>CANTO ${esc(c.no)}</b><span>${esc(c.title)}</span>${c.hidden?'<i>숨김</i>':''}</button>`).join('')
+         + (S.viewer.gm && !DEMO ? `<button class="dv" data-c="+"><b>+</b><span>Canto 추가</span></button>`:'');
+  } else {
+    divs = (g.subs||[]).map(s=>{ const n=charsIn(g.id,s.id).length;
+      return `<button class="dv ${s.id===S.sub?'on':''} ${s.sealed&&!n?'sealed':''}" data-s="${s.id}"><b>${esc(s.name)}</b>${s.sealed&&!n?'<i>SEALED</i>':`<i>${n}</i>`}</button>`; }).join('');
+  }
+  $('#divs').innerHTML=divs; $('#divs').style.display=divs?'':'none';
+  $('#divs').querySelectorAll('.dv').forEach(b=>b.onclick=()=>{
+    if(b.dataset.c==='+') return editCanto(null);
+    if(b.dataset.c){ S.canto=b.dataset.c; } else S.sub=b.dataset.s;
+    renderFold();
+  });
+  const body=$('#body'); body.scrollTop=0;
+  if(g.id==='canto') return renderCanto();
+  if(g.sealedGroup && !charsIn(g.id).length){ body.innerHTML = sealHTML(g,'이 기록철은 아직 열람할 수 없습니다','분류 · 소속 · 인원 모두 봉인 상태입니다. 공개되면 이 자리에 기록이 꽂힙니다.')+addBtnRow(g.id,null); bindCards(); return; }
+  const sub=(g.subs||[]).find(s=>s.id===S.sub);
+  const list=charsIn(g.id, sub?sub.id:null);
+  S.list=list.map(c=>c.id);
+  if(sub && sub.sealed && !list.length){ body.innerHTML = sealHTML(g,`${sub.name} — 기록 봉인`, `${esc(sub.full)}<br>소속 인원은 아직 공개되지 않았습니다.`)+addBtnRow(g.id,sub.id); bindCards(); return; }
+  body.innerHTML = (sub?`<div class="subhead"><h3>${esc(sub.name)}</h3><span>${esc(sub.full)}${sub.kr?' — '+esc(sub.kr):''}</span><span class="mono">${list.length} 명</span></div>`:'')
+    + `<div class="grid">${list.map((c,i)=>cardHTML(c,i)).join('')}${S.viewer.gm&&!DEMO?`<button class="card add" data-add="${g.id}|${sub?sub.id:''}"><span class="plus">+</span>인물 추가</button>`:''}</div>`;
+  bindCards();
+}
+function addBtnRow(g,sub){ return (S.viewer.gm&&!DEMO)?`<div style="display:flex;justify-content:center;margin-top:-30px;padding-bottom:20px"><button class="btn brass" data-add="${g}|${sub||''}">+ 인물 추가</button></div>`:''; }
+function sealHTML(g,t,p){
+  const n=3+hash(t)%3;
+  return `<div class="empty"><div class="seal" style="--c:${gcol(g)}"><div class="wax"><span>LC</span></div><h4>[ ${esc(t)} ]</h4><p>${p}</p>
+    <div class="bars">${Array.from({length:n},(_,i)=>`<i style="width:${55+hash(t+i)%45}%"></i>`).join('')}</div></div></div>`;
+}
+function cardHTML(c,i,note){
+  const col=ccol(c), mine=owns(c.id);
+  const ph = hasImg(c) ? `<img class="st" src="${stImg(c)}" alt="" loading="lazy" decoding="async">`
+                   : `<div class="hatch"></div><div class="mono-l">${esc((c.en||c.name).replace(/[^A-Za-z가-힣]/g,'')[0]||'?')}</div><span class="na">PHOTO · N/A</span>`;
+  return `<button class="card ${c.hidden?'hidden-entry':''}" style="--cc:${col};--cc-ink:${inkOn(col)};--i:${i}" data-id="${esc(c.id)}">
+    <div class="ph">${ph}${symSrc(c)?`<img class="sym" src="${symSrc(c)}" alt="" loading="lazy">`:''}
+      <div class="tagrow"><span class="tg">${esc(c.tag||'')}</span>${c.title?`<span class="tt">${esc(c.title)}</span>`:''}</div>
+      <div class="badges">${mine?'<span class="bdg mine">MY FILE</span>':''}${c.pending?'<span class="bdg wait">기록 대기</span>':''}${c.hidden?'<span class="bdg hid">숨김</span>':''}</div></div>
+    <div class="meta"><div class="nm">${esc(c.name)}</div><div class="en">${esc(c.en||'')}</div>
+      ${note!==undefined ? (note?`<div class="note">${esc(note)}</div>`:'') : `<div class="ln">${esc(c.line||'')}</div>`}</div></button>`;
+}
+function bindCards(){
+  $('#body').querySelectorAll('.card[data-id]').forEach(b=>b.onclick=()=>openDoc(b.dataset.id));
+  $('#body').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{ const [g,s]=b.dataset.add.split('|'); editChar(null,{group:g,sub:s||null}); });
+  $('#body').querySelectorAll('[data-ecanto]').forEach(b=>b.onclick=()=>editCanto(b.dataset.ecanto));
+}
+
+function renderCanto(){
+  const c=cantos().find(x=>x.id===S.canto), body=$('#body');
+  if(!c){ body.innerHTML=sealHTML(gOf('canto'),'Canto 기록 없음','공개된 Canto가 아직 없습니다.'); S.list=[]; return; }
+  const col=c.color||'#B08D57';
+  const cast=charsIn('canto', c.id);
+  S.list=cast.map(x=>x.id);
+  body.innerHTML = `<div class="canto-hd" style="--cc:${col}"><div class="no">${esc(c.no)}</div>
+      <div><div class="k">${esc(c.part||'')} · CANTO ${esc(c.no)}${c.date?' · '+esc(c.date):''}</div><h4>${esc(c.title)}</h4><p>${esc(c.line||'')}</p></div>
+      ${S.viewer.gm&&!DEMO?`<button class="btn gm" data-ecanto="${esc(c.id)}">수정</button>`:''}</div>
+    <div class="subhead"><h3>등장인물</h3><span>이 Canto에서 만난 인물 — 다른 기록철에 소속된 인물은 그쪽에서 열람</span><span class="mono">${cast.length} 명</span></div>
+    ${cast.length ? `<div class="grid">${cast.map((x,i)=>cardHTML(x,i)).join('')}${S.viewer.gm&&!DEMO?`<button class="card add" data-add="canto|${esc(c.id)}"><span class="plus">+</span>인물 추가</button>`:''}</div>`
+      : sealHTML(gOf('canto'),'이 Canto의 인물 기록 대기','이 이야기에만 등장한 인물이 정리되면 이 자리에 기록이 꽂힙니다.')+addBtnRow('canto',c.id)}`;
+  bindCards();
+}
+
+function renderSearch(){
+  const q=S.q.toLowerCase();
+  const hit=allChars().filter(c=>visible(c) && [c.name,c.en,c.tag,c.title,c.sub,(gOf(c.group)||{}).name].join(' ').toLowerCase().includes(q))
+    .sort((a,b)=>SEED.groups.findIndex(g=>g.id===a.group)-SEED.groups.findIndex(g=>g.id===b.group)||(a.order||99)-(b.order||99));
+  S.list=hit.map(c=>c.id);
+  $('#fold').style.setProperty('--c','var(--brass)');
+  $('#fhead').innerHTML=`<div><div class="gname kr">검색 결과</div><div class="gsub">“${esc(S.q)}” · ${hit.length} 건</div></div><span class="stamp">SEARCH</span>`;
+  $('#divs').style.display='none';
+  $('#body').innerHTML = hit.length ? `<div class="grid">${hit.map((c,i)=>cardHTML(c,i)).join('')}</div>`
+    : `<div class="empty"><p style="color:var(--ink3)">일치하는 기록이 없습니다.</p></div>`;
+  bindCards();
+}
+
+/* =========================================================
+   기록 문서
+   ========================================================= */
+function openDoc(id, keep){
+  const c=charById(id); if(!c) return;
+  S.open=id; S.back=keep?S.back:false;
+  if(!S.list.includes(id)) S.list=[id];
+  const d=$('#doc'), col=paperCol(c), g=gOf(c.group)||{}, sub=(g.subs||[]).find(s=>s.id===c.sub);
+  d.style.setProperty('--cc',col); d.style.setProperty('--cc-ink',inkOn(col));
+  const idx=S.list.indexOf(id);
+  $('#doc-prev').disabled=idx<=0; $('#doc-next').disabled=idx<0||idx>=S.list.length-1;
+  const docNo = `LC-PF / ${g.code||'--'}-${(c.sub||'').replace(/[^A-Za-z]/g,'')||'X'}-${String(c.order||0).padStart(2,'0')}`;
+  $('#doc-no').textContent = docNo + (c.pending?' · 기록 대기':'');
+  const photo = hasImg(c) ? `<img class="st" id="ph-img" src="${stImg(c,S.back)}" alt="${esc(c.name)} 스탠딩">${hasBack(c)?`<button class="flip" id="ph-flip">${S.back?'앞면':'뒷면'}</button>`:''}`
+                      : `<div class="none"><div><b>${esc((c.en||c.name).replace(/[^A-Za-z가-힣]/g,'')[0]||'?')}</b>PHOTO NOT ON FILE</div></div>`;
+  const appear = c.group==='canto' ? cantos().filter(ct=>ct.id===c.sub) : [];
+  $('#doc-body').innerHTML = `
+    ${symSrc(c)?`<img class="doc-sym" src="${symSrc(c)}" alt="">`:''}
+    <div class="doc-hd">
+      <div class="photo"><span class="clip"></span>${photo}</div>
+      <div class="doc-id">
+        <div class="tg"><span class="c">${esc(c.tag||'')}</span>${c.title?`<span>${esc(c.title)}</span>`:''}<span>${esc(g.name||'')}${sub?' · '+esc(sub.name):''}</span></div>
+        <h2>${esc(c.name)}</h2><div class="en">${esc(c.en||'')}</div>
+        ${c.line?`<div class="ln">${inline(c.line)}</div>`:''}
+        <table class="kv" id="kv">${(c.facts||[]).map(([k,v])=>`<tr><th>${esc(k)}</th><td>${inline(v)}</td></tr>`).join('')}</table>
+        ${appear.length?`<div class="sec" style="margin-top:16px"><h3>등장</h3><div class="appear">${appear.map(a=>`<button data-canto="${esc(a.id)}">${esc(a.part)} · CANTO ${esc(a.no)} — ${esc(a.title)}</button>`).join('')}</div></div>`:''}
+        ${S.viewer.gm&&!DEMO?`<div class="gm-row"><button class="btn" id="d-edit">기록 수정 (GM)</button></div>`:''}
+      </div>
+    </div>
+    ${(c.sections||[]).map(s=>`<div class="sec"><h3><i>${esc(s.t)}</i></h3><div class="md">${md(s.b)}</div></div>`).join('')}
+    ${c.pending && !(c.sections||[]).length?`<div class="wait-stamp">[ 설정 기록 대기 — 자료가 들어오면 이 칸이 채워집니다 ]</div>`:''}
+    <div id="conf"></div>
+    <div class="doc-foot"><span>LECTERN COMPANY · PERSONNEL RECORD</span><span>${esc(docNo)}</span><span>🔓 공개 기록${c.privCount||canSee(c.id)?' + 🔒 기밀':''}</span></div>`;
+  const f=$('#ph-flip'); if(f) f.onclick=()=>{ S.back=!S.back; const im=$('#ph-img'); im.style.opacity=0; setTimeout(()=>{ im.src=stImg(c,S.back); im.onload=()=>im.style.opacity=1; f.textContent=S.back?'앞면':'뒷면'; },180); };
+  $('#doc-body').querySelectorAll('[data-canto]').forEach(b=>b.onclick=()=>{ closeDoc(); $('#q').value=''; S.q=''; S.canto=b.dataset.canto; selectGroup('canto'); });
+  const e=$('#d-edit'); if(e) e.onclick=()=>editChar(c.id);
+  renderConf(c);
+  if(!keep) $('#doc-body').parentElement.scrollTop=0;
+  d.classList.add('on'); d.setAttribute('aria-hidden','false'); $('#scrim').classList.add('on');
+  try{ history.replaceState(null,'','#'+encodeURIComponent(id)); }catch(e){}
+}
+function closeDoc(){ S.open=null; $('#doc').classList.remove('on'); $('#doc').setAttribute('aria-hidden','true'); $('#scrim').classList.remove('on'); try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
+function stepDoc(d){ const i=S.list.indexOf(S.open)+d; if(S.open && i>=0 && i<S.list.length) openDoc(S.list[i]); }
+
+/* 🔒 기밀 칸 */
+function renderConf(c){
+  const box=$('#conf'); if(!box) return;
+  const can=canSee(c.id);
+  if(!can){
+    if(!c.privCount){ box.innerHTML=''; return; }
+    const n=c.privCount, rows=[];
+    for(let i=0;i<n;i++){ rows.push('<i class="s" style="width:'+(18+hash(c.id+'t'+i)%14)+'%"></i>'); const k=2+hash(c.id+i)%3; for(let j=0;j<k;j++) rows.push(`<i style="width:${48+hash(c.id+i+'-'+j)%50}%"></i>`); }
+    box.innerHTML = `<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀</div><div class="redact">${rows.join('')}</div>
+      <div class="redact-note">[ 열람 권한 없음 ] · 이 인물을 담당하는 계정과 GM만 볼 수 있습니다 · 기밀 ${n}건</div></div>`;
+    return;
+  }
+  const st=S.priv[c.id];
+  if(!st){ loadPriv(c.id); if(S.priv[c.id] && S.priv[c.id].state!=='loading') return renderConf(c); box.innerHTML=`<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀</div><p class="redact-note">[ 기밀 기록 불러오는 중… ]</p></div>`; return; }
+  if(st.state==='loading'){ box.innerHTML=`<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀</div><p class="redact-note">[ 기밀 기록 불러오는 중… ]</p></div>`; return; }
+  if(st.state==='denied'){ box.innerHTML=`<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀</div><p class="redact-note">[ 서버가 열람을 거절했습니다 ] · 계정에 이 인물이 연결되어 있는지 GM에게 확인해 주세요</p></div>`; return; }
+  if(st.state==='empty'){
+    if(c.privCount) box.innerHTML = `<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀</div><p class="redact-note">[ 기밀 기록 ${c.privCount}건 — 아직 ${DEMO?'이 화면에 불러오지':'서버에 올라가지'} 않았습니다 ]</p>
+      ${S.viewer.gm?`<div class="gm-row"><button class="btn" data-up="1">🔒 ${DEMO?'비공개 파일 열기 (GM_전용/dossier_private_seed.json)':'비공개 기록 올리기'}</button></div>`:''}</div>`;
+    else box.innerHTML = S.viewer.gm ? `<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀 — GM 열람</div><p class="redact-note">[ 아직 정해진 기밀 기록이 없습니다 ]${DEMO?'':' · 「기록 수정 (GM)」의 🔒 칸에 쓰면 담당 계정과 GM에게만 보입니다'}</p></div>` : '';
+    box.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>$('#file').click());
+    return;
+  }
+  const p=norm(st.data||{});
+  if(p.facts && p.facts.length){ const kv=$('#kv'); if(kv && !kv.querySelector('tr.lock')) kv.insertAdjacentHTML('beforeend', p.facts.map(([k,v])=>`<tr class="lock"><th>🔒 ${esc(k)}</th><td>${inline(v)}</td></tr>`).join('')); }
+  const why = owns(c.id) ? '본인 열람' : 'GM 열람';
+  box.innerHTML = (p.sections||[]).length ? `<div class="conf"><div class="conf-k">■ CONFIDENTIAL · 기밀 — 본인 · GM 전용</div><span class="ok-stamp">열람 승인 · ${esc(why)}</span>
+    ${(p.sections||[]).map(s=>`<div class="sec"><h3><i>🔒 ${esc(s.t)}</i></h3><div class="md">${md(s.b)}</div></div>`).join('')}</div>` : '';
+}
+function loadPriv(id){
+  if(DEMO){
+    const d=S.demoPriv && S.demoPriv[id];
+    S.priv[id] = d ? {state:'ok',data:d} : {state:'empty'}; return;
+  }
+  if(!DB){ S.priv[id]={state:'denied'}; return; }
+  S.priv[id]={state:'loading'};
+  DB.ref('dossier/private/'+id).once('value').then(s=>{
+    S.priv[id] = s.exists()? {state:'ok',data:s.val()} : {state:'empty'};
+  }).catch(e=>{ S.priv[id]={state:'denied'}; console.warn('private',id,e&&e.code); })
+    .finally(()=>{ if(S.open===id) renderConf(charById(id)); });
+}
+
+/* =========================================================
+   GM — 비공개 기록 올리기 / 기록 수정 / 인물 · Canto 추가
+   ========================================================= */
+$('#file').addEventListener('change', async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  let j; try{ j=JSON.parse(await f.text()); }catch(x){ return toast('JSON 파일을 읽지 못했습니다'); }
+  if(!j || j.kind!=='lectern-dossier-private' || !j.private) return toast('인사 기록철 비공개 파일(dossier_private_seed.json)이 아닙니다');
+  if(DEMO){ S.demoPriv=j.private; S.priv={}; toast(`시안: 비공개 기록 ${Object.keys(j.private).length}명분을 이 화면에만 불러왔습니다`); if(S.open) openDoc(S.open,true); return; }
+  if(!S.viewer.gm) return;
+  const n=Object.keys(j.private).length;
+  if(!confirm(`비공개 기록 ${n}명분을 서버에 올립니다.\n이미 올라가 있는 같은 인물의 기록은 이 파일 내용으로 바뀝니다.\n계속할까요?`)) return;
+  try{ await DB.ref('dossier/private').update(j.private); S.priv={}; toast(`🔒 비공개 기록 ${n}명분을 올렸습니다`); if(S.open) openDoc(S.open,true); }
+  catch(x){ toast('올리지 못했습니다 — 데이터베이스 규칙을 새 버전으로 바꿨는지 확인해 주세요'); console.warn(x); }
+});
+
+function secsToText(secs){ return (secs||[]).map(s=>`### ${s.t}\n${s.b}`).join('\n\n'); }
+function textToSecs(t){ const out=[]; let cur=null; String(t||'').split('\n').forEach(l=>{ const m=l.match(/^###\s+(.+)/); if(m){ cur={t:m[1].trim(),b:''}; out.push(cur); } else if(cur){ cur.b+=(cur.b?'\n':'')+l; } else if(l.trim()){ cur={t:'기록',b:l}; out.push(cur); } }); out.forEach(s=>s.b=s.b.replace(/\s+$/,'')); return out.filter(s=>s.t||s.b); }
+function factsToText(f){ return (f||[]).map(([k,v])=>`${k} | ${v}`).join('\n'); }
+function textToFacts(t){ return String(t||'').split('\n').map(l=>l.split('|')).filter(a=>a[0].trim()).map(([k,...v])=>[k.trim(),v.join('|').trim()]); }
+function subOptions(gid,sel){ if(gid==='canto') return cantos().map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>CANTO ${esc(c.no)} · ${esc(c.title)}</option>`).join('') || '<option value="">(Canto 없음)</option>';
+  const g=gOf(gid); return (g&&g.subs||[]).map(s=>`<option value="${s.id}" ${s.id===sel?'selected':''}>${esc(s.name)}</option>`).join('') || '<option value="">(칸 없음)</option>'; }
+
+async function editChar(id, preset){
+  if(!S.viewer.gm || DEMO) return;
+  const c = id ? charById(id) : Object.assign({id:'',name:'',en:'',tag:'',color:'#888888',line:'',facts:[],sections:[],order:charsIn(preset.group,preset.sub).length+1,pending:true}, preset);
+  let pv={facts:[],sections:[]};
+  if(id){ try{ const s=await DB.ref('dossier/private/'+id).once('value'); if(s.exists()) pv=norm(s.val()); }catch(e){} }
+  const gsel = SEED.groups.map(g=>`<option value="${g.id}" ${g.id===c.group?'selected':''}>${esc(g.name)} (${esc(g.code)})</option>`).join('');
+  $('#mbox').innerHTML = `<h4>${id?'기록 수정':'인물 추가'} <span class="sp"></span><span class="mono" style="color:var(--ink3)">${id?esc(id):''}</span></h4>
+    <p class="help">본문 표기: <code>### 칸 제목</code> 으로 칸을 나눔 · <code>- </code> 목록 · <code>## </code> 소제목 · <code>&gt; </code> 요약 · <code>= 항목 | 내용</code> 표 · <code>@ 이름 | 관계</code> 관계 · <code>**굵게**</code><br>🔒 칸에 쓴 내용은 <b>그 인물을 담당하는 계정과 GM만</b> 볼 수 있습니다 (서버가 막음).</p>
+    ${id?'':`<div class="fl"><label>인물 ID<small>영문 · 숫자 · _ (계정 연결에 씀)</small></label><input id="e-id" placeholder="예: lcd_elysia" pattern="[a-z0-9_]+"></div>`}
+    <div class="fl"><label>이름</label><input id="e-name" value="${esc(c.name)}"></div>
+    <div class="fl"><label>영문 표기</label><input id="e-en" value="${esc(c.en||'')}"></div>
+    <div class="fl"><label>분류 · 칸</label><div style="display:flex;gap:6px"><select id="e-group">${gsel}</select><select id="e-sub">${subOptions(c.group,c.sub)}</select></div></div>
+    <div class="fl"><label>번호표 · 순서</label><div style="display:flex;gap:6px"><input id="e-tag" value="${esc(c.tag||'')}" placeholder="No.01 / LCCA"><input id="e-order" type="number" value="${c.order||1}" style="max-width:90px"><input id="e-color" type="color" value="${/^#[0-9a-f]{6}$/i.test(c.color||'')?c.color:'#888888'}" style="max-width:60px;padding:2px"></div></div>
+    <div class="fl"><label>한 줄 소개</label><input id="e-line" value="${esc(c.line||'')}"></div>
+    <div class="fl"><label>이미지<small>올리면 자료실에도 들어갑니다 · 투명 여백은 자동으로 잘림</small></label>
+      <div class="imgset">${[['imgA','char','스탠딩'],['backA','back','뒷면'],['symA','sym','심볼']].map(([f,k,l])=>`
+        <div class="imgslot" data-f="${f}" data-k="${k}"><div class="pv ${k==='sym'?'round':''}">${(c[f]||(f==='imgA'&&c.img)||(f==='symA'&&c.sym)||(f==='backA'&&c.back))?`<img src="${f==='imgA'?stImg(c):f==='backA'?stImg(c,true):symSrc(c)}" alt="">`:'<i>없음</i>'}</div>
+          <b>${l}</b><div class="ib"><button type="button" class="btn sm" data-up>올리기</button>${c[f]?'<button type="button" class="btn sm" data-x>빼기</button>':''}</div></div>`).join('')}</div></div>
+    <div class="fl"><label>🔓 기본 정보<small>한 줄에 <code>항목 | 내용</code></small></label><textarea id="e-facts">${esc(factsToText(c.facts))}</textarea></div>
+    <div class="fl"><label>🔓 공개 본문</label><textarea class="tall" id="e-secs">${esc(secsToText(c.sections))}</textarea></div>
+    <div class="fl"><label>🔒 기본 정보<small>본인 · GM 전용</small></label><textarea class="priv" id="e-pfacts">${esc(factsToText(pv.facts))}</textarea></div>
+    <div class="fl"><label>🔒 기밀 본문<small>본인 · GM 전용</small></label><textarea class="tall priv" id="e-psecs">${esc(secsToText(pv.sections))}</textarea></div>
+    <div class="fl"><label>상태</label><div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:6px;font-size:12.5px">
+      <label><input type="checkbox" id="e-pending" ${c.pending?'checked':''}> '기록 대기' 표시</label>
+      <label><input type="checkbox" id="e-hidden" ${c.hidden?'checked':''}> 숨김 (GM에게만 보임 · 미리 넣어 두기)</label></div></div>
+    <div class="mrow">${id&&c.edited?`<button class="btn danger" id="e-reset" title="GM이 고친 공개 내용을 지우고 처음 기록으로">처음 기록으로</button>`:''}<span style="flex:1"></span><button class="btn" id="e-cancel">취소</button><button class="btn solid" id="e-save">저장</button></div>`;
+  $('#modal').classList.add('on');
+  const IMGS={imgA:c.imgA||null, backA:c.backA||null, symA:c.symA||null};
+  document.querySelectorAll('#mbox .imgslot').forEach(sl=>{
+    const f=sl.dataset.f, k=sl.dataset.k, pv=sl.querySelector('.pv');
+    sl.querySelector('[data-up]').onclick=async()=>{
+      const cid = id || ($('#e-id').value||'').trim();
+      if(!/^[a-z0-9_]{2,40}$/.test(cid)) return toast('먼저 인물 ID를 적어 주세요 (영문 소문자 · 숫자 · _)');
+      const file=await LC_ASSET.pick(); if(!file) return;
+      pv.innerHTML='<i>올리는 중…</i>';
+      try{ const r=await LC_ASSET.upload(file,{kind:k, id:cid, name:($('#e-name').value.trim()||cid)+' '+({char:'스탠딩',back:'뒷면',sym:'심볼'})[k]});
+        IMGS[f]=r.ref; pv.innerHTML=`<img src="${r.ref}" alt="">`; toast('올렸습니다 — 저장을 눌러 확정하세요'); }
+      catch(e){ pv.innerHTML='<i>실패</i>'; toast('올리지 못했습니다 — '+(e.code||e.message)); }
+    };
+    const x=sl.querySelector('[data-x]'); if(x) x.onclick=()=>{ IMGS[f]=null; pv.innerHTML='<i>기본</i>'; };
+  });
+  $('#e-group').onchange=e=>$('#e-sub').innerHTML=subOptions(e.target.value,null);
+  $('#e-cancel').onclick=()=>$('#modal').classList.remove('on');
+  const r=$('#e-reset'); if(r) r.onclick=async()=>{ if(!confirm('공개 기록을 처음 상태로 되돌릴까요? (🔒 기밀은 그대로)')) return; await DB.ref('dossier/public/'+id).remove(); $('#modal').classList.remove('on'); toast('처음 기록으로 되돌렸습니다'); };
+  $('#e-save').onclick=async()=>{
+    const nid = id || ($('#e-id').value||'').trim();
+    if(!/^[a-z0-9_]{2,40}$/.test(nid) && !id) return toast('인물 ID는 영문 소문자 · 숫자 · _ 로 2자 이상');
+    if(!id && charById(nid)) return toast('이미 있는 ID입니다');
+    const name=$('#e-name').value.trim(); if(!name) return toast('이름을 적어 주세요');
+    const pub={ name, en:$('#e-en').value.trim(), group:$('#e-group').value, sub:$('#e-sub').value||null, tag:$('#e-tag').value.trim(),
+      order:Number($('#e-order').value)||1, color:$('#e-color').value, line:$('#e-line').value.trim(),
+      facts:textToFacts($('#e-facts').value), sections:textToSecs($('#e-secs').value),
+      pending:$('#e-pending').checked||null, hidden:$('#e-hidden').checked||null };
+    const pf=textToFacts($('#e-pfacts').value), ps=textToSecs($('#e-psecs').value);
+    pub.privCount = ps.length + (pf.length?1:0) || null;
+    if(c.img) pub.img=c.img; if(c.back) pub.back=1; if(c.sym) pub.sym=1; ['imgA','backA','symA'].forEach(f=>{ if(IMGS[f]) pub[f]=IMGS[f]; }); if(c.title) pub.title=c.title; if(c.colorD) pub.colorD=c.colorD; if(c.colorL) pub.colorL=c.colorL; if(c.npc) pub.npc=true;
+    try{
+      await DB.ref('dossier/public/'+nid).set(JSON.parse(JSON.stringify(pub)));
+      if(pf.length||ps.length) await DB.ref('dossier/private/'+nid).set({facts:pf,sections:ps}); else await DB.ref('dossier/private/'+nid).remove();
+      delete S.priv[nid]; $('#modal').classList.remove('on'); toast('저장했습니다');
+      if(S.open===nid) setTimeout(()=>openDoc(nid,true),50);
+    }catch(x){ toast('저장하지 못했습니다 — 데이터베이스 규칙을 확인해 주세요'); console.warn(x); }
+  };
+}
+
+function editCanto(cid){
+  if(!S.viewer.gm || DEMO) return;
+  const c = cid ? cantos().find(x=>x.id===cid) : {id:'',part:'지옥편',no:'',title:'',color:'#FB6544',line:''};
+  $('#mbox').innerHTML = `<h4>${cid?'Canto 수정':'Canto 추가'}</h4>
+    <p class="help">등장인물은 저장한 뒤 이 Canto 칸의 <b>+ 인물 추가</b>로 넣습니다 (이 Canto에만 나온 인물).</p>
+    ${cid?'':`<div class="fl"><label>Canto ID</label><input id="c-id" placeholder="예: c1"></div>`}
+    <div class="fl"><label>편 · 번호</label><div style="display:flex;gap:6px"><input id="c-part" value="${esc(c.part||'')}"><input id="c-no" value="${esc(c.no||'')}" placeholder="1 / 2.5" style="max-width:90px"><input id="c-color" type="color" value="${/^#[0-9a-f]{6}$/i.test(c.color||'')?c.color:'#B08D57'}" style="max-width:60px;padding:2px"></div></div>
+    <div class="fl"><label>제목</label><input id="c-title" value="${esc(c.title||'')}"></div>
+    <div class="fl"><label>시점</label><input id="c-date" value="${esc(c.date||'')}" placeholder="984.02"></div>
+    <div class="fl"><label>한 줄 요약</label><input id="c-line" value="${esc(c.line||'')}"></div>
+    <div class="fl"><label>상태</label><label style="padding-top:6px;font-size:12.5px"><input type="checkbox" id="c-hidden" ${c.hidden?'checked':''}> 숨김 (GM에게만 보임)</label></div>
+    <div class="mrow"><span style="flex:1"></span><button class="btn" id="c-cancel">취소</button><button class="btn solid" id="c-save">저장</button></div>`;
+  $('#modal').classList.add('on');
+  $('#c-cancel').onclick=()=>$('#modal').classList.remove('on');
+  $('#c-save').onclick=async()=>{
+    const id=cid||($('#c-id').value||'').trim(); if(!/^[a-z0-9_]{1,20}$/.test(id)) return toast('Canto ID는 영문 소문자 · 숫자');
+    const o={part:$('#c-part').value.trim(),no:$('#c-no').value.trim(),title:$('#c-title').value.trim(),color:$('#c-color').value,date:$('#c-date').value.trim()||null,
+      line:$('#c-line').value.trim(),sort:parseFloat($('#c-no').value)||0,hidden:$('#c-hidden').checked||null};
+    if(!o.title) return toast('제목을 적어 주세요');
+    try{ await DB.ref('dossier/cantos/'+id).set(JSON.parse(JSON.stringify(o))); $('#modal').classList.remove('on'); S.canto=id; toast('저장했습니다'); }
+    catch(x){ toast('저장하지 못했습니다'); console.warn(x); }
+  };
+}
+
+/* ── 알림 ── */
+let tT; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>el.classList.remove('on'),2800); }
+
+/* ── 입력 ── */
+let qT; $('#q').addEventListener('input',e=>{ clearTimeout(qT); qT=setTimeout(()=>{ S.q=e.target.value.trim(); renderDrawer(); if(S.q) renderSearch(); else selectGroup(S.group); },120); });
+$('#doc-x').onclick=closeDoc; $('#scrim').onclick=closeDoc;
+$('#doc-prev').onclick=()=>stepDoc(-1); $('#doc-next').onclick=()=>stepDoc(1);
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') $('#modal').classList.remove('on'); });
+addEventListener('keydown',e=>{
+  if($('#modal').classList.contains('on')){ if(e.key==='Escape') $('#modal').classList.remove('on'); return; }
+  if(!S.open) return;
+  if(e.key==='Escape') closeDoc(); else if(e.key==='ArrowLeft') stepDoc(-1); else if(e.key==='ArrowRight') stepDoc(1);
+});
+
+/* ── 통합 사이트와 주고받기 ── */
+LC_on('theme', d=>{ document.documentElement.dataset.theme = d.v==='light'?'light':'dark'; renderAll(); if(S.open) openDoc(S.open,true); });
+LC_on('open', d=>{ if(d.id) jumpTo(d.id); });
+LC_on('viewer', d=>{ if(DEMO) setViewer(d.v); });
+function jumpTo(id){
+  const c=charById(id); if(!c) return;
+  $('#q').value=''; S.q='';
+  if(c.group!==S.group || c.sub!==S.sub){ S.group=c.group; S.sub=c.sub; renderDrawer(); renderFold(); }
+  openDoc(id);
+}
+
+/* =========================================================
+   시작
+   ========================================================= */
+function boot(){
+  renderAll();
+  const h=decodeURIComponent((location.hash||'').slice(1)); if(h && charById(h)) setTimeout(()=>jumpTo(h),120);
+  if(DEMO){
+    const as=QS.get('as'), role=QS.get('role')||'PL';
+    if(QS.get('role')) setViewer({label:QS.get('u')||'', role, gm:role==='GM', chars:as?[as]:[]});
+    return;
+  }
+  try{ firebase.initializeApp(FB_CONFIG); AUTH=firebase.auth(); DB=firebase.database(); }catch(e){ console.warn(e); return; }
+  let offs=[];
+  AUTH.onAuthStateChanged(u=>{
+    offs.forEach(f=>f()); offs=[];
+    if(!u){ setViewer({role:'guest'}); return; }
+    const L=(path,fn)=>{ const r=DB.ref(path); const h=r.on('value',s=>fn(s.val()),e=>console.warn(path,e&&e.code)); offs.push(()=>r.off('value',h)); };
+    L('users/'+u.uid, v=>{ v=v||{};
+      const gm = u.uid===MAIN_GM_UID || v.role==='GM';
+      setViewer({label:v.label||v.loginId||'', role:gm?'GM':(v.role||'PL'), gm, chars:Object.keys(v.chars||{}).filter(k=>v.chars[k]===true), npcChar:v.npcChar||null});
+    });
+    L('dossier/public', v=>{ S.ov=v||{}; renderAll(); if(S.open && charById(S.open)) openDoc(S.open,true); });
+    L('dossier/cantos', v=>{ S.cantoOv=v||{}; renderAll(); });
+  });
+}
+boot();
+</script>
+</body>
+</html>

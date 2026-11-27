@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lectern Company — 모음집</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<script>
+  (function(){ var q=new URLSearchParams(location.search), t=q.get('theme');
+    if(!t){ try{ t=(JSON.parse(localStorage.getItem('lc-lobby-prefs')||'{}').theme); }catch(e){} }
+    document.documentElement.dataset.theme = (t==='light')?'light':'dark'; })();
+</script>
+<script src="../lc-bridge.js"></script>
+<script src="../lc-assets.js"></script>
+<script src="../media/media.js"></script>
+<style>
+:root{
+  --serif-en:'Cormorant Garamond','Noto Serif KR',serif; --serif-kr:'Noto Serif KR','Cormorant Garamond',serif;
+  --sans:'Pretendard','Noto Sans KR',system-ui,sans-serif; --mono:'IBM Plex Mono','Noto Sans KR',monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+html[data-theme="dark"]{--bg:#121412;--bg2:#0d0f0d;--panel:#1C1F1C;--panel2:#232723;--ink:#E9E4D8;--ink2:#B9B4A8;--ink3:#7d7f77;--line:#5A5C55;--line2:#33362f;
+  --brass:#B08D57;--brass2:#d4b47c;--gold1:#d9b878;--gold2:#8a6a36;--wall:#161816;--mat:#ece5d3;--shadow:rgba(0,0,0,.55);--grain:.06;--red:#E04450}
+html[data-theme="light"]{--bg:#EDE8DD;--bg2:#e3ddcf;--panel:#F6F2EA;--panel2:#fbf8f2;--ink:#1C1C1A;--ink2:#4a4842;--ink3:#8C877C;--line:#8C877C;--line2:#cfc8b8;
+  --brass:#9A7A45;--brass2:#7c6033;--gold1:#c9a35e;--gold2:#7a5a28;--wall:#e6e0d2;--mat:#fbf7ec;--shadow:rgba(60,45,20,.25);--grain:.08;--red:#C8323C}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.mono{font-family:var(--mono);letter-spacing:.04em}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:var(--grain);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+#app{height:100%;display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);max-width:1440px;margin:0 auto;padding:18px 26px 0}
+.hd{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.hd .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--ink3)}
+.hd h1{font-family:var(--serif-en);font-weight:600;font-size:30px;letter-spacing:.12em;line-height:1.05}
+.hd h1 small{font-family:var(--serif-kr);font-size:15px;letter-spacing:.04em;font-weight:500;color:var(--ink2);margin-left:10px}
+.hd .sp{flex:1}
+.stat{display:flex;gap:18px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink3)}
+.stat b{display:block;font-family:var(--serif-en);font-size:22px;color:var(--ink);letter-spacing:.02em;font-weight:600;line-height:1}
+.stat b small{font-size:13px;color:var(--ink3)}
+.btn{border:1px solid var(--line);padding:6px 11px;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:.18s var(--ease);white-space:nowrap}
+.btn:hover{border-color:var(--brass);color:var(--brass2)}
+.btn.on{border-color:var(--brass);color:var(--brass2);background:color-mix(in srgb,var(--brass) 12%,transparent)}
+.btn:disabled{opacity:.4;cursor:default}
+
+.main{min-height:0;display:grid;grid-template-columns:250px minmax(0,1fr);gap:0}
+/* 앨범 선반 */
+.shelf{border-right:1px solid var(--line2);overflow:auto;padding:18px 16px 30px 0;scrollbar-width:thin}
+.shelf h3{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.2em;color:var(--ink3);margin:0 0 10px}
+.sl{display:grid;grid-template-columns:62px 1fr;gap:12px;align-items:center;width:100%;text-align:left;padding:8px;border:1px solid transparent;margin-bottom:6px;transition:.2s var(--ease)}
+.sl:hover{background:var(--panel)}
+.sl.on{background:var(--panel);border-color:color-mix(in srgb,var(--ac) 60%,var(--line2))}
+.sl .mini{position:relative;width:62px;height:62px}
+.sl .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--ink3)}
+.sl b{display:block;font-family:var(--serif-kr);font-size:13.5px;line-height:1.35;margin-top:2px}
+.sl .pg{height:2px;background:var(--line2);margin-top:7px;position:relative}
+.sl .pg i{position:absolute;left:0;top:0;bottom:0;background:var(--ac)}
+.sl.sealed{opacity:.55;cursor:default}
+.sl.sealed:hover{background:none}
+
+/* 표지 */
+.cover{position:relative;width:100%;height:100%;overflow:hidden;background:
+  linear-gradient(150deg,color-mix(in srgb,var(--ac) 80%,#000) 0%,color-mix(in srgb,var(--ac) 35%,#0b0b0b) 55%,#0b0b0b 100%);box-shadow:0 6px 16px var(--shadow)}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cover .num{position:absolute;right:8%;bottom:-6%;font-family:var(--serif-en);font-weight:600;font-size:var(--nf,120px);line-height:1;color:rgba(255,255,255,.88);letter-spacing:-.02em}
+.cover .arch{position:absolute;left:10%;top:12%;width:34%;opacity:.55}
+.cover .lbl{position:absolute;left:9%;bottom:9%;font-family:var(--mono);font-size:var(--lf,10px);letter-spacing:.2em;color:rgba(255,255,255,.75);line-height:1.6}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,rgba(255,255,255,.12),transparent 40%);pointer-events:none}
+.cover.sealed{background:repeating-linear-gradient(135deg,var(--panel2) 0 7px,var(--line2) 7px 8px)}
+.cover.sealed .num{color:var(--ink3);opacity:.6}
+
+/* 펼친 앨범 */
+.album{min-height:0;overflow:auto;padding:24px 4px 40px 30px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.ahd{display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:end;margin-bottom:30px}
+.sleeve{position:relative;width:230px;height:230px;margin-right:70px}
+.sleeve .cover{position:absolute;inset:0;z-index:2;--nf:150px;--lf:10.5px}
+.disc{position:absolute;top:8px;left:72px;width:214px;height:214px;border-radius:50%;z-index:1;transition:transform .9s var(--ease);
+  background:radial-gradient(circle,var(--ac) 0 17%,#111 17.5% 19%,transparent 19.5%),repeating-radial-gradient(circle,#0c0c0c 0 2px,#161616 2px 3px);
+  box-shadow:0 8px 20px rgba(0,0,0,.5),inset 0 0 0 1px #2a2a2a}
+.disc::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 30deg,transparent 0 10%,rgba(255,255,255,.12) 14%,transparent 20% 60%,rgba(255,255,255,.08) 66%,transparent 72%)}
+.disc::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:var(--bg)}
+.sleeve.play .disc{transform:translateX(30px)}
+.sleeve.play .disc,.mini-disc.play{animation:spin 2.6s linear infinite}
+@keyframes spin{to{rotate:360deg}}
+.ainfo .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--ac)}
+.ainfo h2{font-family:var(--serif-kr);font-size:30px;font-weight:700;line-height:1.25;margin:6px 0 4px}
+.ainfo .en{font-family:var(--serif-en);font-style:italic;font-size:16px;color:var(--ink2);letter-spacing:.12em}
+.ainfo .meta{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap}
+.ainfo .meta div{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink3)}
+.ainfo .meta b{display:block;font-family:var(--serif-en);font-size:24px;color:var(--ink);letter-spacing:0;font-weight:600}
+.ainfo .row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.sec-h{display:flex;align-items:center;gap:12px;margin:8px 0 14px}
+.sec-h h3{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.2em}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--line2)}
+.sec-h span{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+
+/* 트랙 */
+.tracks{border-top:1px solid var(--line2);margin-bottom:36px}
+.tr{display:grid;grid-template-columns:40px 1fr auto auto;gap:14px;align-items:center;padding:10px 6px;border-bottom:1px solid var(--line2);transition:background .2s}
+.tr:hover{background:color-mix(in srgb,var(--panel) 80%,transparent)}
+.tr .no{font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:center}
+.tr .pl{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;margin:0 auto}
+.tr.cur .pl,.tr .pl:hover{border-color:var(--ac);color:var(--ac)}
+.tr .ti b{display:block;font-weight:500;font-size:14px}
+.tr .ti span{font-size:11.5px;color:var(--ink3)}
+.tr.cur .ti b{color:var(--ac)}
+.tr .st{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink3)}
+.tr.lock .ti b{color:var(--ink3);letter-spacing:.3em}
+.tr.lock .pl{opacity:.35;cursor:default}
+.tr .set{font-size:11px;padding:4px 9px}
+.tr .set.on{border-color:var(--brass);color:var(--brass2)}
+.eqi{display:inline-flex;gap:2px;align-items:flex-end;height:12px;margin-left:8px;vertical-align:-1px}
+.eqi i{width:2px;background:var(--ac);animation:eq .9s ease-in-out infinite}
+.eqi i:nth-child(2){animation-delay:-.3s}.eqi i:nth-child(3){animation-delay:-.6s}
+@keyframes eq{0%,100%{height:3px}50%{height:12px}}
+
+/* 일러스트 벽 */
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:26px 22px;padding:6px 2px 10px}
+.fr{position:relative;text-align:left;animation:fin .5s var(--ease) both;animation-delay:calc(var(--i,0)*30ms)}
+@keyframes fin{from{opacity:0;transform:translateY(8px)}}
+.fr .frame{position:relative;aspect-ratio:16/10;padding:10px;background:linear-gradient(135deg,var(--gold1),var(--gold2) 45%,var(--gold1) 70%,var(--gold2));
+  box-shadow:0 10px 22px var(--shadow),inset 0 0 0 1px rgba(255,255,255,.25),inset 0 0 0 3px rgba(0,0,0,.25);transition:transform .3s var(--ease),box-shadow .3s}
+.fr:hover .frame{transform:translateY(-4px) rotate(-.4deg);box-shadow:0 18px 30px var(--shadow),inset 0 0 0 1px rgba(255,255,255,.25),inset 0 0 0 3px rgba(0,0,0,.25)}
+.fr .mat{position:relative;width:100%;height:100%;background:var(--mat);padding:7px;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.fr .pic{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(150deg,color-mix(in srgb,var(--ac) 45%,#111),#0b0b0b)}
+.fr .pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+.fr .pic img.ok{opacity:1}
+.fr .pic .wait{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:rgba(255,255,255,.55);padding:8px}
+.fr .pic .wait b{display:block;font-family:var(--serif-en);font-size:30px;letter-spacing:0;color:rgba(255,255,255,.85);font-weight:600}
+.fr .plate{margin:10px auto 0;width:max-content;max-width:100%;padding:3px 10px;background:linear-gradient(180deg,var(--gold1),var(--gold2));color:#2a1e0b;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;box-shadow:0 2px 5px var(--shadow)}
+.fr .cap{text-align:center;font-family:var(--serif-kr);font-size:12.5px;margin-top:6px;color:var(--ink2)}
+.fr.lock{cursor:default}
+.fr.lock .frame{background:linear-gradient(135deg,#3a3a36,#1e1e1c 50%,#3a3a36);filter:saturate(.3)}
+.fr.lock .pic{background:repeating-linear-gradient(135deg,#141513 0 8px,#1b1d1a 8px 9px)}
+.fr.lock .pic .wait b{color:rgba(255,255,255,.3)}
+.fr.lock:hover .frame{transform:none}
+.fr.lock .plate{background:#3a3a36;color:#9a978d}
+.fr.lock .cap{color:var(--ink3);letter-spacing:.3em}
+
+/* 플레이어 */
+.player{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:16px;align-items:center;padding:10px 4px 12px;border-top:1px solid var(--line2);background:var(--bg)}
+.mini-disc{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,var(--ac,#B08D57) 0 22%,#111 23% 26%,transparent 27%),repeating-radial-gradient(circle,#0c0c0c 0 2px,#181818 2px 3px);box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.pinfo b{display:block;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinfo span{font-size:11px;color:var(--ink3)}
+.pbar{display:flex;align-items:center;gap:10px;margin-top:4px}
+.pbar .time{font-family:var(--mono);font-size:10px;color:var(--ink3);min-width:36px}
+.seek{flex:1;height:3px;background:var(--line2);position:relative;cursor:pointer}
+.seek i{position:absolute;left:0;top:0;bottom:0;background:var(--ac,#B08D57)}
+.pctrl{display:flex;gap:6px;align-items:center}
+.pctrl button{width:34px;height:34px;border:1px solid var(--line2);display:grid;place-items:center}
+.pctrl button:hover{border-color:var(--brass)}
+.pctrl .big{width:40px;height:40px;border-radius:50%;border-color:var(--ac,#B08D57)}
+.vol{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.vol input{width:90px;accent-color:var(--brass)}
+.player.idle .pinfo b{color:var(--ink3)}
+
+/* 크게 보기 */
+.lb{position:fixed;inset:0;z-index:90;background:rgba(5,5,5,.92);display:none;grid-template-rows:1fr auto;align-items:center;justify-items:center;padding:30px 70px 20px}
+.lb.on{display:grid;animation:lbin .35s var(--ease)}
+@keyframes lbin{from{opacity:0}}
+.lb .stagebox{position:relative;width:100%;height:100%;display:grid;place-items:center;min-height:0}
+.lb img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.lb .ph{width:min(900px,90%);aspect-ratio:16/9;display:grid;place-items:center;background:linear-gradient(150deg,color-mix(in srgb,var(--ac) 40%,#111),#090909);font-family:var(--mono);color:rgba(255,255,255,.6);letter-spacing:.2em;font-size:11px;text-align:center}
+.lb .ph b{display:block;font-family:var(--serif-en);font-size:64px;color:rgba(255,255,255,.85);letter-spacing:0}
+.lb .cap{color:#e9e4d8;text-align:center;padding-top:14px}
+.lb .cap .k{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#8c877c}
+.lb .cap b{display:block;font-family:var(--serif-kr);font-size:17px;margin-top:4px}
+.lb .nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border:1px solid rgba(255,255,255,.25);color:#fff;font-size:20px;display:grid;place-items:center}
+.lb .nav:hover{border-color:#fff}
+.lb .prev{left:14px}.lb .next{right:14px}
+.lb .x{position:absolute;right:16px;top:14px;width:38px;height:38px;border:1px solid rgba(255,255,255,.25);color:#fff}
+.toast{position:fixed;left:50%;bottom:86px;transform:translate(-50%,20px);opacity:0;z-index:120;background:var(--panel);border:1px solid var(--brass);padding:9px 16px;font-size:12.5px;transition:.3s var(--ease);pointer-events:none;box-shadow:0 10px 30px var(--shadow)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.empty{padding:60px 0;text-align:center;color:var(--ink3)}
+html.lc-embed #app{padding-top:14px}
+
+@media (max-width:860px){
+  #app{padding:12px 12px 0}
+  .hd h1{font-size:23px}.hd h1 small{display:block;margin:4px 0 0}
+  .main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
+  .shelf{border-right:0;border-bottom:1px solid var(--line2);display:flex;gap:8px;overflow-x:auto;padding:10px 0}
+  .shelf h3{display:none}
+  .sl{flex:0 0 220px;margin:0}
+  .album{padding:18px 0 30px}
+  .ahd{grid-template-columns:1fr;gap:18px}
+  .sleeve{width:170px;height:170px;margin-right:0}
+  .sleeve .cover{--nf:110px}
+  .disc{width:158px;height:158px;left:52px}
+  .tr{grid-template-columns:34px 1fr auto;gap:10px}
+  .tr .st{display:none}
+  .wall{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:20px 14px}
+  .player{grid-template-columns:auto minmax(0,1fr) auto}
+  .vol{display:none}
+  .lb{padding:50px 10px 16px}
+  .lb .nav{top:auto;bottom:70px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd">
+    <div><div class="k">[ 05. ] GALLERY · ALBUM</div><h1>GALLERY<small>모음집</small></h1></div>
+    <div class="sp"></div>
+    <div class="stat" id="stat"></div>
+    <button class="btn" id="b-all" hidden title="GM: 해금하지 않은 것까지 모두 보기">GM · 전체 보기</button>
+  </header>
+  <div class="main">
+    <nav class="shelf" id="shelf" aria-label="앨범"></nav>
+    <section class="album" id="album"></section>
+  </div>
+  <footer class="player idle" id="player">
+    <div class="mini-disc" id="pdisc"></div>
+    <div class="pinfo"><b id="p-t">재생 중인 곡 없음</b><span id="p-s">해금한 BGM의 ▶를 눌러 감상하세요</span>
+      <div class="pbar"><span class="time" id="p-c">0:00</span><div class="seek" id="seek"><i id="p-bar"></i></div><span class="time" id="p-d">0:00</span></div></div>
+    <div class="pctrl">
+      <button id="p-prev" aria-label="이전 곡">‹</button>
+      <button id="p-pp" class="big" aria-label="재생/정지">▶</button>
+      <button id="p-next" aria-label="다음 곡">›</button>
+    </div>
+    <label class="vol">VOL<input type="range" id="p-vol" min="0" max="100" value="70"></label>
+  </footer>
+</div>
+<div class="lb" id="lb" style="--ac:#FB6544">
+  <div class="stagebox" id="lb-box"></div>
+  <div class="cap" id="lb-cap"></div>
+  <button class="nav prev" id="lb-prev" aria-label="이전">‹</button>
+  <button class="nav next" id="lb-next" aria-label="다음">›</button>
+  <button class="x" id="lb-x" aria-label="닫기">✕</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+/* =========================================================
+   Lectern Company — 모음집 (앨범) v1.0
+   · Canto 마다 앨범 한 장: 해금한 컷씬 일러스트 + BGM
+   · 해금 = 비주얼 노벨에서 그 장면을 본 것 (컷씬 → 일러스트, BGM → 곡)
+     기록: 이 브라우저(lc.vn.*) + 계정(progress/{uid}) — 다른 기기에서도 유지
+   · 해금한 BGM은 「로비 BGM으로」 → 사이트 전체 배경 음악으로 재생
+   ========================================================= */
+const FB_CONFIG = {
+  apiKey: "AIzaSyARSLd9Xs7s98PTf6ht5gVtJM2OBe3Sobw", authDomain: "lectern-company.firebaseapp.com",
+  databaseURL: "https://lectern-company-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "lectern-company",
+  storageBucket: "lectern-company.firebasestorage.app", messagingSenderId: "719328977812", appId: "1:719328977812:web:5159887c26083d2c6fa581"
+};
+const MAIN_GM_UID='KMQiVU56l0ZABbXwUlRN04vSnQG2';
+const QS=new URLSearchParams(location.search);
+const DEMO=!window.firebase || QS.has('demo');
+const M=window.LC_MEDIA||{albums:[],illust:{},bgm:{}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lsGet=(k,d)=>{ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } };
+
+const S={ album:(M.albums[0]||{}).id, gm:QS.get('role')==='GM', all:false, uid:null,
+  local:{gallery:[],bgm:[]}, remote:{gallery:{},bgm:{}}, siteBgm:lsGet('lc-site-bgm',null), cur:null, lb:null };
+let DB=null;
+
+/* ── 해금 ── */
+function loadLocal(){ S.local.gallery=lsGet('lc.vn.gallery',[]); S.local.bgm=lsGet('lc.vn.bgm',[]); }
+function hasIll(n){ return S.all || S.local.gallery.includes(n) || !!S.remote.gallery[M.key(n)]; }
+function hasBgm(n){ return S.all || S.local.bgm.includes(n) || !!S.remote.bgm[M.key(n)]; }
+const illOf=a=>Object.entries(M.illust).filter(([,v])=>v.album===a).map(([n,v])=>({n,...v}));
+const bgmOf=a=>Object.entries(M.bgm).filter(([,v])=>v.album===a).map(([n,v])=>({n,...v}));
+
+/* ── 그리기 ── */
+function coverHTML(a,big){
+  const first=illOf(a.id).find(x=>hasIll(x.n));
+  return `<div class="cover" style="--ac:${a.color}">
+    <svg class="arch" viewBox="0 0 100 120"><path d="M8 120V48A42 42 0 0 1 92 48V120" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2"/><path d="M50 30l3 14 14 3-14 3-3 14-3-14-14-3 14-3z" fill="rgba(255,255,255,.9)"/></svg>
+    <div class="lbl">${esc(a.chapterEn||'')}<br>CANTO ${esc(a.no)}</div><div class="num">${esc(a.no)}</div>
+    ${first?`<img data-ill="${esc(first.n)}" alt="" style="opacity:0">`:''}</div>`;
+}
+function renderStat(){
+  const I=Object.keys(M.illust), B=Object.keys(M.bgm);
+  $('#stat').innerHTML=`<div>ILLUSTRATION<b>${I.filter(hasIll).length}<small> / ${I.length}</small></b></div><div>BGM<b>${B.filter(hasBgm).length}<small> / ${B.length}</small></b></div>`;
+}
+function renderShelf(){
+  $('#shelf').innerHTML='<h3>ALBUM · CANTO</h3>'+M.albums.map(a=>{
+    const il=illOf(a.id), bg=bgmOf(a.id), got=il.filter(x=>hasIll(x.n)).length+bg.filter(x=>hasBgm(x.n)).length, tot=il.length+bg.length;
+    return `<button class="sl ${a.id===S.album?'on':''}" data-a="${a.id}" style="--ac:${a.color}"><div class="mini" style="--nf:46px;--lf:6px">${coverHTML(a)}</div>
+      <div><div class="t">${esc(a.chapter)} · ${esc(a.cat||'')} ${esc(a.no)}</div><b>${esc(a.title)}</b><div class="pg"><i style="width:${tot?got/tot*100:0}%"></i></div></div></button>`;
+  }).join('') + (M.sealed||[]).map(x=>`<div class="sl sealed" style="--ac:${x.color}"><div class="mini" style="--nf:46px"><div class="cover sealed"><div class="num">${esc(x.no)}</div></div></div>
+      <div><div class="t">${esc(x.chapter)} · CANTO ${esc(x.no)}</div><b style="letter-spacing:.3em;color:var(--ink3)">미공개</b></div></div>`).join('');
+  $('#shelf').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ S.album=b.dataset.a; renderShelf(); renderAlbum(); $('#album').scrollTop=0; });
+  hydrateImgs($('#shelf'));
+}
+function renderAlbum(){
+  const a=M.albums.find(x=>x.id===S.album); const box=$('#album');
+  if(!a){ box.innerHTML='<div class="empty">아직 열린 앨범이 없습니다.</div>'; return; }
+  box.style.setProperty('--ac',a.color); $('#lb').style.setProperty('--ac',a.color);
+  const il=illOf(a.id), bg=bgmOf(a.id), gi=il.filter(x=>hasIll(x.n)).length, gb=bg.filter(x=>hasBgm(x.n)).length;
+  const playing=S.cur && M.bgm[S.cur] && M.bgm[S.cur].album===a.id && !AU.paused;
+  box.innerHTML=`
+    <div class="ahd">
+      <div class="sleeve ${playing?'play':''}" id="sleeve" style="--ac:${a.color}"><div class="disc"></div>${coverHTML(a,true)}</div>
+      <div class="ainfo">
+        <div class="k">${esc(a.chapter)} · ${esc(a.cat||'MAIN')} · CANTO ${esc(a.no)}${a.date?' · '+esc(a.date):''}</div>
+        <h2>${esc(a.title)}</h2><div class="en">Original Record — Canto ${esc(a.no)}</div>
+        <div class="meta"><div>ILLUSTRATION<b>${gi} / ${il.length}</b></div><div>BGM<b>${gb} / ${bg.length}</b></div></div>
+        <div class="row"><button class="btn" id="b-playall" ${gb?'':'disabled'}>▶ 앨범 듣기</button></div>
+      </div>
+    </div>
+    <div class="sec-h"><h3>SIDE A · BGM</h3><span>비주얼 노벨에서 그 곡이 흐르는 장면을 보면 해금</span></div>
+    <div class="tracks">${bg.map((t,i)=>{ const ok=hasBgm(t.n), cur=S.cur===t.n, site=S.siteBgm===t.n;
+      return `<div class="tr ${ok?'':'lock'} ${cur?'cur':''}" data-n="${esc(t.n)}">
+        <span class="no">${String(i+1).padStart(2,'0')}</span>
+        <div class="ti"><b>${ok?esc(t.title):'· · · · ·'}${cur&&!AU.paused?'<span class="eqi"><i></i><i></i><i></i></span>':''}</b><span>${ok?esc(t.scene):'아직 듣지 못한 곡'}</span></div>
+        ${ok?`<button class="btn set ${site?'on':''}" data-site="${esc(t.n)}" title="사이트 전체 배경 음악으로">${site?'♪ 로비 BGM':'로비 BGM으로'}</button>`:'<span class="st">LOCKED</span>'}
+        <button class="pl" data-play="${esc(t.n)}" ${ok?'':'disabled'} aria-label="재생">${cur&&!AU.paused?'❚❚':'▶'}</button></div>`; }).join('')}</div>
+    <div class="sec-h"><h3>SIDE B · ILLUSTRATION</h3><span>컷씬을 보면 액자에 걸림</span></div>
+    <div class="wall">${il.map((x,i)=>{ const ok=hasIll(x.n), no=String(i+1).padStart(2,'0');
+      return `<button class="fr ${ok?'':'lock'}" data-ill-open="${ok?esc(x.n):''}" style="--i:${i}">
+        <div class="frame"><div class="mat"><div class="pic">${ok?`<div class="wait"><div><b>${no}</b>일러스트 등록 대기</div></div><img data-ill="${esc(x.n)}" alt="">`:`<div class="wait"><div><b>?</b>스토리를 진행하면 해금</div></div>`}</div></div></div>
+        <div class="plate">No.${no}</div><div class="cap">${ok?esc(x.cap):'· · ·'}</div></button>`; }).join('')}</div>`;
+  box.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{ const n=b.dataset.play; if(S.cur===n && !AU.paused) AU.pause(); else play(n); });
+  box.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>setSite(b.dataset.site));
+  box.querySelectorAll('[data-ill-open]').forEach(b=>{ if(b.dataset.illOpen) b.onclick=()=>openLb(b.dataset.illOpen); });
+  const pa=$('#b-playall'); if(pa) pa.onclick=()=>{ const f=bg.find(t=>hasBgm(t.n)); if(f) play(f.n); };
+  hydrateImgs(box);
+}
+/* 이미지 파일 찾기 (webp → png → jpg) */
+const IMGOK={};
+function hydrateImgs(root){
+  root.querySelectorAll('img[data-ill]').forEach(im=>{
+    const n=im.dataset.ill, urls=M.illustUrls(n,'../'); let i=0;
+    if(IMGOK[n]===false) return; if(IMGOK[n]){ im.src=IMGOK[n]; im.classList.add('ok'); im.style.opacity=''; return; }
+    im.onerror=()=>{ if(i<urls.length) im.src=urls[i++]; else IMGOK[n]=false; };
+    im.onload=()=>{ IMGOK[n]=im.src; im.classList.add('ok'); im.style.opacity=''; };
+    im.src=urls[i++];
+  });
+}
+
+/* ── 크게 보기 ── */
+function openLb(n){
+  const a=M.albums.find(x=>x.id===S.album), list=illOf(a.id).filter(x=>hasIll(x.n)); const k=list.findIndex(x=>x.n===n); if(k<0) return;
+  S.lb={list,k}; drawLb(); $('#lb').classList.add('on');
+}
+function drawLb(){
+  const {list,k}=S.lb, x=list[k], all=illOf(S.album), no=String(all.findIndex(y=>y.n===x.n)+1).padStart(2,'0');
+  $('#lb-box').innerHTML = IMGOK[x.n] ? `<img src="${IMGOK[x.n]}" alt="${esc(x.cap)}">` : `<div class="ph"><div><b>${no}</b>일러스트 등록 대기<br><span style="font-size:9.5px;opacity:.6">media/illust/${esc(x.n)}.png</span></div></div>`;
+  $('#lb-cap').innerHTML=`<div class="k">CANTO ${esc((M.albums.find(a=>a.id===S.album)||{}).no)} · No.${no} · ${k+1} / ${list.length}</div><b>${esc(x.cap)}</b>`;
+  $('#lb-prev').style.visibility=k>0?'':'hidden'; $('#lb-next').style.visibility=k<list.length-1?'':'hidden';
+}
+$('#lb-x').onclick=()=>$('#lb').classList.remove('on');
+$('#lb-prev').onclick=()=>{ if(S.lb.k>0){ S.lb.k--; drawLb(); } };
+$('#lb-next').onclick=()=>{ if(S.lb.k<S.lb.list.length-1){ S.lb.k++; drawLb(); } };
+$('#lb').addEventListener('click',e=>{ if(e.target.id==='lb'||e.target.id==='lb-box') $('#lb').classList.remove('on'); });
+
+/* ── 재생 ── */
+const AU=new Audio(); AU.preload='none';
+AU.volume=(+lsGet('lc-gallery-vol',70))/100*.85; $('#p-vol').value=Math.round(AU.volume/.85*100);
+let tryUrls=[], tryI=0;
+function play(n){
+  const t=M.bgm[n]; if(!t||!hasBgm(n)) return;
+  if(S.cur!==n){ S.cur=n; tryUrls=M.bgmUrls(n,'../'); tryI=0; AU.src=tryUrls[tryI++]; }
+  AU.play().then(()=>{}).catch(()=>{});
+  drawPlayer(); renderAlbum();
+}
+AU.addEventListener('error',()=>{ if(!S.cur) return; if(tryI<tryUrls.length){ AU.src=tryUrls[tryI++]; AU.play().catch(()=>{}); return; }
+  toast('음원 파일이 아직 없습니다 — media/bgm/'+(M.bgm[S.cur]||{}).file+'.mp3'); S.cur=null; drawPlayer(); renderAlbum(); hold(false); });
+AU.addEventListener('play',()=>{ hold(true); drawPlayer(); renderAlbum(); });
+AU.addEventListener('pause',()=>{ hold(false); drawPlayer(); renderAlbum(); });
+AU.addEventListener('ended',()=>step(1,true));
+AU.addEventListener('timeupdate',()=>{ const d=AU.duration||0; $('#p-bar').style.width=(d?AU.currentTime/d*100:0)+'%'; $('#p-c').textContent=fmt(AU.currentTime); $('#p-d').textContent=fmt(d); });
+function fmt(s){ s=Math.floor(s||0); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function playable(){ return Object.keys(M.bgm).filter(hasBgm); }
+function step(d,auto){ const L=playable(); if(!L.length) return; const i=L.indexOf(S.cur); const j=i<0?0:i+d; if(j<0||j>=L.length){ if(auto){ S.cur=null; drawPlayer(); renderAlbum(); } return; } play(L[j]); }
+function drawPlayer(){
+  const t=S.cur&&M.bgm[S.cur]; const a=t&&M.albums.find(x=>x.id===t.album);
+  $('#player').classList.toggle('idle',!t); $('#player').style.setProperty('--ac',a?a.color:'');
+  $('#p-t').textContent=t?t.title:'재생 중인 곡 없음'; $('#p-s').textContent=t?`${a?a.chapter+' · CANTO '+a.no+' · ':''}${t.scene}`:'해금한 BGM의 ▶를 눌러 감상하세요';
+  $('#p-pp').textContent=(t&&!AU.paused)?'❚❚':'▶'; $('#pdisc').classList.toggle('play',!!t&&!AU.paused);
+  const sl=$('#sleeve'); if(sl) sl.classList.toggle('play',!!t&&!AU.paused&&t.album===S.album);
+}
+$('#p-pp').onclick=()=>{ if(!S.cur){ const L=playable(); if(L.length) play(L[0]); else toast('아직 해금한 BGM이 없습니다'); return; } AU.paused?AU.play().catch(()=>{}):AU.pause(); };
+$('#p-prev').onclick=()=>step(-1); $('#p-next').onclick=()=>step(1);
+$('#seek').onclick=e=>{ const r=e.currentTarget.getBoundingClientRect(); if(AU.duration) AU.currentTime=(e.clientX-r.left)/r.width*AU.duration; };
+$('#p-vol').oninput=e=>{ AU.volume=e.target.value/100*.85; try{ localStorage.setItem('lc-gallery-vol',e.target.value); }catch(x){} };
+// 여기서 감상하는 동안은 로비 BGM을 잠시 멈춤
+let held=false; function hold(on){ if(held===on) return; held=on; LC_post({type:'bgm-hold',on}); }
+LC_on('hidden',()=>{ if(!AU.paused) AU.pause(); });
+function setSite(n){
+  S.siteBgm = S.siteBgm===n ? null : n;
+  try{ localStorage.setItem('lc-site-bgm',JSON.stringify(S.siteBgm)); }catch(e){}
+  LC_post({type:'bgm-set',name:S.siteBgm});
+  toast(S.siteBgm ? `♪ 로비 BGM — ${M.bgm[n].title}` : '로비 BGM을 기본 곡으로 되돌렸습니다');
+  renderAlbum();
+}
+
+let tT; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>el.classList.remove('on'),2600); }
+addEventListener('keydown',e=>{
+  if($('#lb').classList.contains('on')){ if(e.key==='Escape') $('#lb').classList.remove('on'); if(e.key==='ArrowLeft') $('#lb-prev').click(); if(e.key==='ArrowRight') $('#lb-next').click(); return; }
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); $('#p-pp').click(); }
+});
+$('#b-all').onclick=()=>{ S.all=!S.all; $('#b-all').classList.toggle('on',S.all); renderAll(); };
+LC_on('theme',d=>{ document.documentElement.dataset.theme=d.v==='light'?'light':'dark'; });
+LC_on('viewer',d=>{ if(DEMO){ S.gm=!!(d.v&&d.v.gm); $('#b-all').hidden=!S.gm; if(!S.gm&&S.all){ S.all=false; renderAll(); } } });
+LC_on('site-bgm',d=>{ S.siteBgm=d.name||null; renderAlbum(); });
+// 다른 화면(비주얼 노벨)에서 해금하면 바로 반영
+addEventListener('storage',e=>{ if(e.key==='lc.vn.gallery'||e.key==='lc.vn.bgm'){ loadLocal(); syncUp(); renderAll(); } });
+LC_on('enter',()=>{ loadLocal(); renderAll(); });
+
+function renderAll(){ renderStat(); renderShelf(); renderAlbum(); drawPlayer(); }
+
+/* ── 계정 기록 (progress/{uid}) ── */
+function syncUp(){
+  if(!DB||!S.uid) return; const up={};
+  S.local.gallery.forEach(n=>{ if(M.illust[n] && !S.remote.gallery[M.key(n)]) up['gallery/'+M.key(n)]=true; });
+  S.local.bgm.forEach(n=>{ if(M.bgm[n] && !S.remote.bgm[M.key(n)]) up['bgm/'+M.key(n)]=true; });
+  if(Object.keys(up).length) DB.ref('progress/'+S.uid).update(up).catch(e=>console.warn('progress',e&&e.code));
+}
+function boot(){
+  loadLocal(); $('#b-all').hidden=!S.gm; renderAll();
+  if(DEMO) return;
+  try{ firebase.initializeApp(FB_CONFIG); DB=firebase.database(); }catch(e){ console.warn(e); return; }
+  firebase.auth().onAuthStateChanged(u=>{
+    if(!u){ S.uid=null; return; } S.uid=u.uid;
+    DB.ref('users/'+u.uid+'/role').once('value').then(s=>{ S.gm = u.uid===MAIN_GM_UID || s.val()==='GM'; $('#b-all').hidden=!S.gm; }).catch(()=>{});
+    DB.ref('progress/'+u.uid).on('value',s=>{ const v=s.val()||{}; S.remote={gallery:v.gallery||{},bgm:v.bgm||{}};
+      // 계정 기록을 이 브라우저에도 내려받아 둠 (비주얼 노벨이 '이미 본 것'으로 알도록)
+      const lg=new Set(S.local.gallery), lb=new Set(S.local.bgm); let ch=false;
+      Object.keys(S.remote.gallery).forEach(k=>{ const n=M.unkey(k); if(!lg.has(n)){ lg.add(n); ch=true; } });
+      Object.keys(S.remote.bgm).forEach(k=>{ const n=M.unkey(k); if(!lb.has(n)){ lb.add(n); ch=true; } });
+      if(ch){ try{ localStorage.setItem('lc.vn.gallery',JSON.stringify([...lg])); localStorage.setItem('lc.vn.bgm',JSON.stringify([...lb])); }catch(e){} loadLocal(); }
+      syncUp(); renderAll(); }, e=>console.warn('progress',e&&e.code));
+  });
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "$uid": {
+        ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true)) && ($uid !== 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2')",
+        ".validate": "newData.hasChildren(['loginId','role']) && newData.child('role').val().matches(/^(PL|NPC|GM|SPEC)$/)",
+        "main": {
+          ".validate": "newData.isBoolean() && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || newData.val() === false)"
+        },
+        "loginId": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_.-]{2,20}$/)"
+        }
+      }
+    },
+    "characters": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true))"
+    },
+    "settings": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "gameDate": {
+        ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+        ".validate": "newData.isString() && newData.val().matches(/^[0-9]{3,4}-[0-9]{2}-[0-9]{2}$/)"
+      }
+    },
+    "meta": {
+      "seq": {
+        ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+        ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || (root.child('users/'+auth.uid).exists() && root.child('users/'+auth.uid+'/role').val() !== 'NPC' && root.child('users/'+auth.uid+'/role').val() !== 'SPEC'))) || (auth != null && root.child('users/'+auth.uid+'/role').val() === 'NPC' && root.child('members/lcb/'+root.child('users/'+auth.uid+'/npcChar').val()+'/since').exists())",
+        ".validate": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || newData.val() === data.val() + 1)"
+      }
+    },
+    "members": {
+      "lcb": {
+        ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+        "$char": {
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+          ".validate": "root.child('characters/'+$char+'/kind').val() === 'npc' && newData.child('since').val() === now"
+        }
+      }
+    },
+    "waiting": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+      "$char": {
+        ".write": "auth != null && (root.child('users/'+auth.uid+'/chars/'+$char).val() === true || (auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM')))",
+        ".validate": "newData.child('uid').val() === auth.uid"
+      }
+    },
+    "presence": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "prefs": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "messages": {
+      "lcb": {
+        ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || (root.child('users/'+auth.uid).exists() && root.child('users/'+auth.uid+'/role').val() !== 'NPC' && root.child('users/'+auth.uid+'/role').val() !== 'SPEC'))) || ((auth != null && root.child('users/'+auth.uid+'/role').val() === 'NPC' && root.child('members/lcb/'+root.child('users/'+auth.uid+'/npcChar').val()+'/since').exists()) && query.orderByChild === 'ts' && query.startAt >= root.child('members/lcb/'+root.child('users/'+auth.uid+'/npcChar').val()+'/since').val())",
+        ".indexOn": [
+          "ts"
+        ],
+        "$mid": {
+          ".write": "!data.exists() && newData.exists() && ((auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || (root.child('users/'+auth.uid).exists() && root.child('users/'+auth.uid+'/role').val() !== 'NPC' && root.child('users/'+auth.uid+'/role').val() !== 'SPEC'))) || (auth != null && root.child('users/'+auth.uid+'/role').val() === 'NPC' && root.child('members/lcb/'+root.child('users/'+auth.uid+'/npcChar').val()+'/since').exists()))",
+          ".validate": "newData.hasChildren(['type','uid','ts','gameDate']) && newData.child('uid').val() === auth.uid && newData.child('ts').val() === now && ((newData.child('type').val() === 'text' && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && root.child('users/'+auth.uid+'/chars/'+newData.child('from').val()).val() === true) || (newData.child('type').val() === 'gm' && newData.child('from').val() === 'GM' && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && (auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))) || (newData.child('type').val() === 'system' && (auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))))"
+        }
+      }
+    },
+    "gacha": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "config": {
+        ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true))"
+      },
+      "items": {
+        ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true))"
+      },
+      "grants": {
+        "$gid": {
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true))",
+          ".validate": "newData.child('amt').isNumber() && newData.child('t').isNumber()"
+        }
+      },
+      "official": {
+        ".write": "auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true || auth.uid === root.child('gacha/config/sherUid').val() || root.child('users/'+auth.uid+'/chars/no10').val() === true)",
+        "spent": {
+          ".validate": "newData.isNumber() && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/main').val() === true || !data.exists() || newData.val() >= data.val())"
+        }
+      }
+    },
+    "notices": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "$nid": {
+        ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['type','title']) && newData.child('title').isString() && newData.child('title').val().length <= 60 && newData.child('type').val().matches(/^(SESSION|SYSTEM|EVENT|ARCHIVE)$/))"
+      }
+    },
+    "dossier": {
+      "public": {
+        ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+        "$cid": {
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+          ".validate": "!newData.exists() || (newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40)"
+        }
+      },
+      "cantos": {
+        ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+        "$cid": {
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+          ".validate": "!newData.exists() || newData.child('title').isString()"
+        }
+      },
+      "private": {
+        ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+        "$cid": {
+          ".read": "auth != null && ((auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM')) || root.child('users/'+auth.uid+'/chars/'+$cid).val() === true || root.child('users/'+auth.uid+'/npcChar').val() === $cid)",
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))"
+        }
+      }
+    },
+    "progress": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM')))",
+        ".write": "auth != null && auth.uid === $uid && root.child('users/'+auth.uid).exists()",
+        "gallery": {
+          "$k": {
+            ".validate": "newData.val() === true"
+          }
+        },
+        "bgm": {
+          "$k": {
+            ".validate": "newData.val() === true"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "assets": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "$kind": {
+        "$id": {
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+          ".validate": "!newData.exists() || (newData.child('d').isString() && newData.child('d').val().beginsWith('data:image/') && newData.child('d').val().length < 2600000 && $kind.matches(/^[a-z]{2,12}$/) && $id.matches(/^[a-z0-9_-]{1,60}$/))"
+        }
+      }
+    },
+    "assetIndex": {
+      ".read": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid).exists()))",
+      "$kind": {
+        "$id": {
+          ".write": "(auth != null && (auth.uid === 'KMQiVU56l0ZABbXwUlRN04vSnQG2' || root.child('users/'+auth.uid+'/role').val() === 'GM'))",
+          ".validate": "!newData.exists() || (newData.child('name').isString() && newData.child('name').val().length <= 60 && newData.child('w').isNumber() && newData.child('h').isNumber())"
+        }
+      }
+    }
+  }
+}
